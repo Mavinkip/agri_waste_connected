@@ -115,4 +115,6 @@ class AppStrings {
   static const String offlineMode = 'You are offline';
   static const String syncing = 'Syncing data...';
   static const String syncComplete = 'Sync complete';
+
+  static const String rememberMe = 'Remember Me';
 }

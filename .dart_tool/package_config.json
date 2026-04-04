@@ -284,10 +284,22 @@
       "languageVersion": "3.5"
     },
     {
+      "name": "get_it",
+      "rootUri": "file:///home/delva/.pub-cache/hosted/pub.dev/get_it-7.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "glob",
       "rootUri": "file:///home/delva/.pub-cache/hosted/pub.dev/glob-2.1.3",
       "packageUri": "lib/",
       "languageVersion": "3.3"
+    },
+    {
+      "name": "go_router",
+      "rootUri": "file:///home/delva/.pub-cache/hosted/pub.dev/go_router-13.2.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
     },
     {
       "name": "google_fonts",
@@ -300,6 +312,12 @@
       "rootUri": "file:///home/delva/.pub-cache/hosted/pub.dev/graphs-2.3.2",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "hive",
+      "rootUri": "file:///home/delva/.pub-cache/hosted/pub.dev/hive-2.2.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "hooks",
@@ -324,6 +342,12 @@
       "rootUri": "file:///home/delva/.pub-cache/hosted/pub.dev/http_parser-4.1.2",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "hydrated_bloc",
+      "rootUri": "file:///home/delva/.pub-cache/hosted/pub.dev/hydrated_bloc-9.1.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "image_picker",
