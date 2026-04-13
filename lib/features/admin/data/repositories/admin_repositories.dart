@@ -25,12 +25,9 @@ class AdminRepository {
           .collection('users')
           .where('role', isEqualTo: 'driver')
           .get();
-      final listings =
-          await _firestore.collection('listings').get();
-
-      final pending = listings.docs
-          .where((d) => d['status'] == 'pending')
-          .length;
+      final listings = await _firestore.collection('listings').get();
+      final pending =
+          listings.docs.where((d) => d['status'] == 'pending').length;
 
       return AdminDashboardStats(
         totalFarmers: farmers.size,
@@ -54,12 +51,10 @@ class AdminRepository {
           .collection('transactions')
           .where('type', isEqualTo: 'credit')
           .get();
-
       double total = 0;
       for (final doc in snap.docs) {
         total += (doc.data()['amount'] ?? 0).toDouble();
       }
-
       return RevenueStats(
         today: 0,
         thisWeek: 0,
@@ -79,11 +74,9 @@ class AdminRepository {
       Query query = _firestore
           .collection('users')
           .where('role', isEqualTo: 'driver');
-
       if (isAvailable != null) {
         query = query.where('isAvailable', isEqualTo: isAvailable);
       }
-
       final snap = await query.get();
       return snap.docs.map((doc) {
         final d = doc.data() as Map<String, dynamic>;
@@ -101,6 +94,28 @@ class AdminRepository {
       }).toList();
     } catch (e) {
       return [];
+    }
+  }
+
+  Future<DriverModel?> getDriverDetails(String driverId) async {
+    try {
+      final doc =
+          await _firestore.collection('users').doc(driverId).get();
+      if (!doc.exists) return null;
+      final d = doc.data()!;
+      return DriverModel(
+        id: doc.id,
+        fullName: d['fullName'] ?? '',
+        phoneNumber: d['phoneNumber'] ?? '',
+        vehicleNumber: d['vehicleNumber'] ?? '',
+        vehicleType: d['vehicleType'] ?? '',
+        isAvailable: d['isAvailable'] ?? false,
+        isActive: d['isActive'] ?? true,
+        completedDeliveries: d['completedPickups'] ?? 0,
+        averageRating: (d['averageRating'] ?? 0).toDouble(),
+      );
+    } catch (e) {
+      return null;
     }
   }
 
@@ -134,6 +149,39 @@ class AdminRepository {
     }
   }
 
+  Future<List<VehicleModel>> getAllVehicles() async {
+    try {
+      final snap = await _firestore.collection('vehicles').get();
+      return snap.docs.map((doc) {
+        final d = doc.data();
+        return VehicleModel(
+          id: doc.id,
+          plateNumber: d['plateNumber'] ?? '',
+          vehicleType: d['vehicleType'] ?? '',
+          driverId: d['driverId'] ?? '',
+          driverName: d['driverName'] ?? '',
+          isActive: d['isActive'] ?? true,
+          capacity: (d['capacity'] ?? 0).toDouble(),
+        );
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> addVehicle(Map<String, dynamic> vehicleData) async {
+    try {
+      await _firestore.collection('vehicles').add({
+        ...vehicleData,
+        'createdAt': FieldValue.serverTimestamp(),
+        'isActive': true,
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // ── PRICING ──
 
   Future<PricingConfig> getPricingConfig() async {
@@ -144,12 +192,11 @@ class AdminRepository {
       final data = doc.data()!;
       return PricingConfig(
         premiumThreshold: (data['premiumThreshold'] ?? 70).toDouble(),
-        basePrices: Map<String, double>.from(
-            (data['basePrices'] as Map).map(
-                (k, v) => MapEntry(k, (v as num).toDouble()))),
+        basePrices: Map<String, double>.from((data['basePrices'] as Map)
+            .map((k, v) => MapEntry(k, (v as num).toDouble()))),
         premiumPrices: Map<String, double>.from(
-            (data['premiumPrices'] as Map).map(
-                (k, v) => MapEntry(k, (v as num).toDouble()))),
+            (data['premiumPrices'] as Map)
+                .map((k, v) => MapEntry(k, (v as num).toDouble()))),
       );
     } catch (e) {
       return PricingConfig.empty();
@@ -192,7 +239,6 @@ class AdminRepository {
 
       double totalWeight = 0;
       final Map<String, double> byType = {};
-
       for (final doc in snap.docs) {
         final d = doc.data();
         final weight = (d['actualQuantity'] ?? 0).toDouble();
@@ -200,7 +246,6 @@ class AdminRepository {
         totalWeight += weight;
         byType[type] = (byType[type] ?? 0) + weight;
       }
-
       return InventoryStats(
         totalItems: snap.size,
         totalWeight: totalWeight,
@@ -220,11 +265,9 @@ class AdminRepository {
           .where('status', isEqualTo: 'completed')
           .orderBy('completedAt', descending: true)
           .limit(20);
-
       if (wasteType != null) {
         query = query.where('wasteType', isEqualTo: wasteType);
       }
-
       final snap = await query.get();
       return snap.docs.map((doc) {
         final d = doc.data() as Map<String, dynamic>;
@@ -240,6 +283,26 @@ class AdminRepository {
       }).toList();
     } catch (e) {
       return [];
+    }
+  }
+
+  Future<InventoryItem?> getInventoryItemDetails(String itemId) async {
+    try {
+      final doc =
+          await _firestore.collection('listings').doc(itemId).get();
+      if (!doc.exists) return null;
+      final d = doc.data()!;
+      return InventoryItem(
+        id: doc.id,
+        wasteType: d['wasteType'] ?? '',
+        weight: (d['actualQuantity'] ?? 0).toDouble(),
+        farmerName: d['farmerName'] ?? '',
+        collectedAt:
+            (d['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        status: d['status'] ?? 'completed',
+      );
+    } catch (e) {
+      return null;
     }
   }
 
@@ -263,6 +326,27 @@ class AdminRepository {
       }).toList();
     } catch (e) {
       return [];
+    }
+  }
+
+  Future<RoutineRoute?> getRoutineDetails(String routineId) async {
+    try {
+      final doc =
+          await _firestore.collection('routines').doc(routineId).get();
+      if (!doc.exists) return null;
+      final d = doc.data()!;
+      return RoutineRoute(
+        id: doc.id,
+        name: d['name'] ?? '',
+        dayOfWeek: d['dayOfWeek'] ?? '',
+        farmerIds: List<String>.from(d['farmerIds'] ?? []),
+        farmerNames: List<String>.from(d['farmerNames'] ?? []),
+        driverId: d['driverId'] ?? '',
+        driverName: d['driverName'] ?? '',
+        isActive: d['isActive'] ?? true,
+      );
+    } catch (e) {
+      return null;
     }
   }
 
@@ -297,6 +381,19 @@ class AdminRepository {
     }
   }
 
+  Future<bool> optimizeRoutine(String routineId) async {
+    try {
+      // Placeholder: real implementation would reorder farmerIds by geo-proximity.
+      // For now just touch the document so the BLoC gets a success response.
+      await _firestore.collection('routines').doc(routineId).update({
+        'lastOptimizedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // ── FARMERS ──
 
   Future<List<UserModel>> getAllFarmers(
@@ -306,21 +403,17 @@ class AdminRepository {
           .collection('users')
           .where('role', isEqualTo: 'farmer')
           .limit(20);
-
       final snap = await query.get();
       final farmers = snap.docs
-          .map((doc) =>
-              UserModel.fromJson({...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+          .map((doc) => UserModel.fromJson(
+              {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
           .toList();
-
       if (search != null && search.isNotEmpty) {
         return farmers
-            .where((f) => f.fullName
-                .toLowerCase()
-                .contains(search.toLowerCase()))
+            .where((f) =>
+                f.fullName.toLowerCase().contains(search.toLowerCase()))
             .toList();
       }
-
       return farmers;
     } catch (e) {
       return [];
@@ -346,12 +439,10 @@ class AdminRepository {
           .collection('listings')
           .where('farmerId', isEqualTo: farmerId)
           .get();
-
       final completed = listingsSnap.docs
           .where((d) => d['status'] == 'completed')
           .length;
       final data = userDoc.data() ?? {};
-
       return FarmerAnalytics(
         consistencyScore:
             (data['consistencyScore'] ?? 0).toDouble(),
@@ -388,7 +479,9 @@ class AdminRepository {
   }
 }
 
-// ── Model classes ──
+// ══════════════════════════════════════════════════════════════
+// MODEL CLASSES
+// ══════════════════════════════════════════════════════════════
 
 class AdminDashboardStats {
   final int totalFarmers;
@@ -453,18 +546,22 @@ class DriverModel {
     required this.completedDeliveries,
     required this.averageRating,
   });
+}
 
-  factory DriverModel.fromJson(Map<String, dynamic> json) => DriverModel(
-        id: json['id'],
-        fullName: json['full_name'],
-        phoneNumber: json['phone_number'],
-        vehicleNumber: json['vehicle_number'],
-        vehicleType: json['vehicle_type'],
-        isAvailable: json['is_available'] ?? false,
-        isActive: json['is_active'] ?? true,
-        completedDeliveries: json['completed_deliveries'] ?? 0,
-        averageRating: (json['average_rating'] ?? 0).toDouble(),
-      );
+class VehicleModel {
+  final String id, plateNumber, vehicleType, driverId, driverName;
+  final bool isActive;
+  final double capacity;
+
+  VehicleModel({
+    required this.id,
+    required this.plateNumber,
+    required this.vehicleType,
+    required this.driverId,
+    required this.driverName,
+    required this.isActive,
+    required this.capacity,
+  });
 }
 
 class PricingConfig {
@@ -511,11 +608,6 @@ class InventoryAlert {
       {required this.wasteType,
       required this.message,
       required this.severity});
-  factory InventoryAlert.fromJson(Map<String, dynamic> json) =>
-      InventoryAlert(
-          wasteType: json['waste_type'],
-          message: json['message'],
-          severity: json['severity']);
 }
 
 class InventoryItem {
@@ -548,17 +640,6 @@ class RoutineRoute {
     required this.driverName,
     required this.isActive,
   });
-
-  factory RoutineRoute.fromJson(Map<String, dynamic> json) => RoutineRoute(
-        id: json['id'],
-        name: json['name'],
-        dayOfWeek: json['day_of_week'],
-        farmerIds: List<String>.from(json['farmer_ids'] ?? []),
-        farmerNames: List<String>.from(json['farmer_names'] ?? []),
-        driverId: json['driver_id'],
-        driverName: json['driver_name'],
-        isActive: json['is_active'] ?? true,
-      );
 
   Map<String, dynamic> toJson() => {
         'name': name,
@@ -604,11 +685,6 @@ class MonthlyData {
       {required this.month,
       required this.pickups,
       required this.earnings});
-
-  factory MonthlyData.fromJson(Map<String, dynamic> json) => MonthlyData(
-      month: json['month'],
-      pickups: json['pickups'] ?? 0,
-      earnings: (json['earnings'] ?? 0).toDouble());
 }
 
 class ReportData {
