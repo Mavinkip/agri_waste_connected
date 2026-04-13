@@ -1,17 +1,24 @@
-import '../../../../core/network/api_client.dart';
+import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../../../shared/models/waste_listing_model.dart';
-import '../../../../shared/services/offline_sync_repository.dart';
+
 class ListingRepository {
-  final ApiClient _apiClient;
-  final OfflineSyncRepository _offlineSync;
-  
+  final FirebaseFirestore _firestore;
+  final FirebaseStorage _storage;
+  final FirebaseAuth _auth;
+
   ListingRepository({
-    ApiClient? apiClient,
-    OfflineSyncRepository? offlineSync,
-  }) : _apiClient = apiClient ?? ApiClient(),
-       _offlineSync = offlineSync ?? OfflineSyncRepository();
-  
-  // Create new waste listing
+    required FirebaseFirestore firestore,
+    required FirebaseStorage storage,
+    required FirebaseAuth auth,
+  })  : _firestore = firestore,
+        _storage = storage,
+        _auth = auth;
+
+  String get _uid => _auth.currentUser!.uid;
+
   Future<WasteListingModel> createListing({
     required WasteType wasteType,
     required double estimatedQuantity,
@@ -23,133 +30,170 @@ class ListingRepository {
     String? notes,
     bool isPhotoRequired = true,
   }) async {
-    try {
-      final response = await _apiClient.post('/listings', {
-        'waste_type': wasteType.toString().split('.').last,
-        'estimated_quantity': estimatedQuantity,
-        'pickup_lat': pickupLat,
-        'pickup_lng': pickupLng,
-        'pickup_address': pickupAddress,
-        'pickup_type': pickupType.toString().split('.').last,
-        'photos': photos,
-        'notes': notes,
-        'is_photo_required': isPhotoRequired,
-      });
-      
-      final listing = WasteListingModel.fromJson(response['data']);
-      
-      // Save locally for offline access
-      await _offlineSync.saveListingLocally(listing);
-      
-      return listing;
-    } catch (e) {
-      // Queue for offline sync if network error
-      if (e is ApiException && e.statusCode == 0) {
-        await _offlineSync.queueOperation(
-          operationType: 'POST',
-          endpoint: '/listings',
-          data: {
-            'waste_type': wasteType.toString(),
-            'estimated_quantity': estimatedQuantity,
-            'pickup_lat': pickupLat,
-            'pickup_lng': pickupLng,
-            'pickup_address': pickupAddress,
-            'pickup_type': pickupType.toString(),
-            'photos': photos,
-            'notes': notes,
-          },
-        );
-      }
-      rethrow;
-    }
+    final user = _auth.currentUser!;
+
+    // Get farmer name from Firestore
+    final userDoc = await _firestore.collection('users').doc(_uid).get();
+    final farmerName = userDoc.data()?['fullName'] ?? 'Unknown Farmer';
+
+    final docRef = await _firestore.collection('listings').add({
+      'farmerId': user.uid,
+      'farmerName': farmerName,
+      'wasteType': wasteType.name,
+      'estimatedQuantity': estimatedQuantity,
+      'pickupLat': pickupLat,
+      'pickupLng': pickupLng,
+      'pickupAddress': pickupAddress,
+      'pickupType': pickupType.name,
+      'status': 'pending',
+      'isPhotoRequired': isPhotoRequired,
+      'photoUrl': photos,
+      'notes': notes,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    final snap = await docRef.get();
+    final data = snap.data()!;
+
+    return WasteListingModel(
+      id: snap.id,
+      farmerId: data['farmerId'],
+      farmerName: data['farmerName'],
+      wasteType: wasteType,
+      estimatedQuantity: estimatedQuantity,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      pickupAddress: pickupAddress,
+      pickupType: pickupType,
+      status: ListingStatus.pending,
+      createdAt: DateTime.now(),
+      isPhotoRequired: isPhotoRequired,
+      notes: notes,
+    );
   }
-  
-  // Get farmer's listings
+
   Future<List<WasteListingModel>> getFarmerListings({
     ListingStatus? status,
     int page = 1,
     int limit = 20,
   }) async {
     try {
-      String url = '/farmer/listings?page=$page&limit=$limit';
+      Query query = _firestore
+          .collection('listings')
+          .where('farmerId', isEqualTo: _uid)
+          .orderBy('createdAt', descending: true)
+          .limit(limit);
+
       if (status != null) {
-        url += '&status=${status.toString().split('.').last}';
+        query = query.where('status', isEqualTo: status.name);
       }
-      
-      final response = await _apiClient.get(url);
-      final List<dynamic> data = response['data'];
-      return data.map((json) => WasteListingModel.fromJson(json)).toList();
+
+      final snap = await query.get();
+      return snap.docs.map((doc) {
+        final d = doc.data() as Map<String, dynamic>;
+        return WasteListingModel.fromJson({...d, 'id': doc.id});
+      }).toList();
     } catch (e) {
-      // Return local cached listings if offline
-      if (e is ApiException && e.statusCode == 0) {
-        return await _offlineSync.getLocalListings();
-      }
       return [];
     }
   }
-  
-  // Get single listing details
+
   Future<WasteListingModel?> getListing(String listingId) async {
     try {
-      final response = await _apiClient.get('/listings/$listingId');
-      return WasteListingModel.fromJson(response['data']);
+      final doc =
+          await _firestore.collection('listings').doc(listingId).get();
+      if (!doc.exists) return null;
+      return WasteListingModel.fromJson({...doc.data()!, 'id': doc.id});
     } catch (e) {
       return null;
     }
   }
-  
-  // Update listing (only allowed for pending status)
+
   Future<WasteListingModel?> updateListing(
-    String listingId,
-    Map<String, dynamic> updates,
-  ) async {
+      String listingId, Map<String, dynamic> updates) async {
     try {
-      final response = await _apiClient.patch('/listings/$listingId', updates);
-      return WasteListingModel.fromJson(response['data']);
+      await _firestore
+          .collection('listings')
+          .doc(listingId)
+          .update(updates);
+      return getListing(listingId);
     } catch (e) {
       return null;
     }
   }
-  
-  // Cancel listing
+
   Future<bool> cancelListing(String listingId) async {
     try {
-      await _apiClient.post('/listings/$listingId/cancel', {});
+      await _firestore
+          .collection('listings')
+          .doc(listingId)
+          .update({'status': 'cancelled'});
       return true;
     } catch (e) {
       return false;
     }
   }
-  
-  // Get active listings count
+
   Future<int> getActiveListingsCount() async {
     try {
-      final response = await _apiClient.get('/farmer/listings/active/count');
-      return response['count'] ?? 0;
+      final snap = await _firestore
+          .collection('listings')
+          .where('farmerId', isEqualTo: _uid)
+          .where('status', whereIn: ['pending', 'assigned'])
+          .get();
+      return snap.size;
     } catch (e) {
       return 0;
     }
   }
-  
-  // Get listing statistics
+
+  Future<List<String>> uploadPhotos(List<String> photoPaths) async {
+    final urls = <String>[];
+    for (final path in photoPaths) {
+      try {
+        final file = File(path);
+        final ref = _storage
+            .ref()
+            .child('listings/$_uid/${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await ref.putFile(file);
+        final url = await ref.getDownloadURL();
+        urls.add(url);
+      } catch (e) {
+        // Skip failed uploads
+      }
+    }
+    return urls;
+  }
+
   Future<ListingStatistics> getListingStatistics() async {
     try {
-      final response = await _apiClient.get('/farmer/listings/statistics');
-      return ListingStatistics.fromJson(response['data']);
+      final snap = await _firestore
+          .collection('listings')
+          .where('farmerId', isEqualTo: _uid)
+          .get();
+
+      final docs = snap.docs;
+      final completed =
+          docs.where((d) => d['status'] == 'completed').length;
+      final pending =
+          docs.where((d) => d['status'] == 'pending').length;
+      final cancelled =
+          docs.where((d) => d['status'] == 'cancelled').length;
+
+      return ListingStatistics(
+        totalListings: docs.length,
+        completedListings: completed,
+        pendingListings: pending,
+        cancelledListings: cancelled,
+        averageCompletionTime: 0,
+        totalWasteCollected: 0,
+      );
     } catch (e) {
       return ListingStatistics.empty();
     }
   }
-  
-  // Upload listing photos
-  Future<List<String>> uploadPhotos(List<String> photoPaths) async {
-    // This would use multipart upload
-    // Implementation depends on your image picker solution
-    return [];
-  }
 }
 
-// Listing Statistics Model
 class ListingStatistics {
   final int totalListings;
   final int completedListings;
@@ -157,7 +201,7 @@ class ListingStatistics {
   final int cancelledListings;
   final double averageCompletionTime;
   final double totalWasteCollected;
-  
+
   ListingStatistics({
     required this.totalListings,
     required this.completedListings,
@@ -166,26 +210,13 @@ class ListingStatistics {
     required this.averageCompletionTime,
     required this.totalWasteCollected,
   });
-  
-  factory ListingStatistics.fromJson(Map<String, dynamic> json) {
-    return ListingStatistics(
-      totalListings: json['total_listings'] ?? 0,
-      completedListings: json['completed_listings'] ?? 0,
-      pendingListings: json['pending_listings'] ?? 0,
-      cancelledListings: json['cancelled_listings'] ?? 0,
-      averageCompletionTime: (json['average_completion_time'] ?? 0).toDouble(),
-      totalWasteCollected: (json['total_waste_collected'] ?? 0).toDouble(),
-    );
-  }
-  
-  factory ListingStatistics.empty() {
-    return ListingStatistics(
-      totalListings: 0,
-      completedListings: 0,
-      pendingListings: 0,
-      cancelledListings: 0,
-      averageCompletionTime: 0,
-      totalWasteCollected: 0,
-    );
-  }
+
+  factory ListingStatistics.empty() => ListingStatistics(
+        totalListings: 0,
+        completedListings: 0,
+        pendingListings: 0,
+        cancelledListings: 0,
+        averageCompletionTime: 0,
+        totalWasteCollected: 0,
+      );
 }

@@ -1,6 +1,9 @@
-
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/farmer/data/repositories/farmer_repository.dart';
@@ -12,68 +15,75 @@ import '../../features/driver/data/repositories/collection_repository.dart';
 import '../../features/driver/presentation/bloc/driver_bloc.dart';
 import '../../features/admin/data/repositories/admin_repositories.dart';
 import '../../features/admin/presentation/bloc/admin_bloc.dart';
-import '../network/api_client.dart';
-import '../services/connectivity_service.dart';
-import '../../shared/services/offline_sync_repository.dart';
 
 final GetIt sl = GetIt.instance;
 
 class Injection {
   static Future<void> init() async {
-    // Core
-    sl.registerLazySingleton<ApiClient>(() => ApiClient());
-    sl.registerLazySingleton<ConnectivityService>(() => ConnectivityService());
-    sl.registerLazySingleton<OfflineSyncRepository>(() => OfflineSyncRepository());
-    
+    // Firebase instances
+    sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
+    sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
+    sl.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+
     // Shared Preferences
     final sharedPreferences = await SharedPreferences.getInstance();
     sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
-    
-    // Repositories - Auth
-    sl.registerLazySingleton<AuthRepository>(() => AuthRepository(apiClient: sl()));
-    
-    // Repositories - Farmer
-    sl.registerLazySingleton<FarmerRepository>(() => FarmerRepository(apiClient: sl()));
+
+    // Repositories
+    sl.registerLazySingleton<AuthRepository>(() => AuthRepository(
+          auth: sl(),
+          firestore: sl(),
+        ));
+
+    sl.registerLazySingleton<FarmerRepository>(() => FarmerRepository(
+          firestore: sl(),
+          auth: sl(),
+        ));
+
     sl.registerLazySingleton<ListingRepository>(() => ListingRepository(
-      apiClient: sl(),
-      offlineSync: sl(),
-    ));
-    sl.registerLazySingleton<WalletRepository>(() => WalletRepository(apiClient: sl()));
-    
-    // Repositories - Driver
+          firestore: sl(),
+          storage: sl(),
+          auth: sl(),
+        ));
+
+    sl.registerLazySingleton<WalletRepository>(() => WalletRepository(
+          firestore: sl(),
+          auth: sl(),
+        ));
+
     sl.registerLazySingleton<CollectionRepository>(() => CollectionRepository(
-      apiClient: sl(),
-      offlineSync: sl(),
-    ));
-    
-    // Repositories - Admin
-    sl.registerLazySingleton<AdminRepository>(() => AdminRepository(apiClient: sl()));
-    
-    // BLoCs - Auth
+          firestore: sl(),
+          storage: sl(),
+          auth: sl(),
+        ));
+
+    sl.registerLazySingleton<AdminRepository>(() => AdminRepository(
+          firestore: sl(),
+          auth: sl(),
+        ));
+
+    // BLoCs
     sl.registerFactory<AuthBloc>(() => AuthBloc(authRepository: sl()));
-    
-    // BLoCs - Farmer
+
     sl.registerFactory<FarmerBloc>(() => FarmerBloc(
-      farmerRepository: sl(),
-      listingRepository: sl(),
-      walletRepository: sl(),
-    ));
+          farmerRepository: sl(),
+          listingRepository: sl(),
+          walletRepository: sl(),
+        ));
+
     sl.registerFactory<SellWizardCubit>(() => SellWizardCubit(
-      listingRepository: sl(),
-    ));
-    
-    // BLoCs - Driver
+          listingRepository: sl(),
+        ));
+
     sl.registerFactory<DriverBloc>(() => DriverBloc(
-      collectionRepository: sl(),
-    ));
-    
-    // BLoCs - Admin
+          collectionRepository: sl(),
+        ));
+
     sl.registerFactory<AdminBloc>(() => AdminBloc(
-      adminRepository: sl(),
-    ));
+          adminRepository: sl(),
+        ));
   }
-  
-  // Helper method to dispose all registered instances if needed
+
   static Future<void> dispose() async {
     await sl.reset();
   }

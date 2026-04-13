@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firebase_options.dart';
 import 'core/services/navigation_service.dart';
+import 'core/di/injection.dart';
+import 'core/theme/app_theme.dart';
 
-// Import all screens
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/language_selection_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
@@ -27,7 +31,19 @@ import 'features/admin/presentation/screens/price_controller_screen.dart';
 import 'features/admin/presentation/screens/inventory_tracker_screen.dart';
 import 'features/admin/presentation/screens/farmer_profile_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
+  await Injection.init();
   runApp(const MyApp());
 }
 
@@ -39,33 +55,34 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Agri-Waste Connect',
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
       navigatorKey: NavigationService.navigatorKey,
       initialRoute: '/splash',
       routes: {
-        '/splash': (context) => const SplashScreen(),
-        '/language': (context) => const LanguageSelectionScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/farmer/home': (context) => const FarmerHomeScreen(),
+        '/splash':               (context) => const SplashScreen(),
+        '/language':             (context) => const LanguageSelectionScreen(),
+        '/login':                (context) => const LoginScreen(),
+        '/register':             (context) => const RegisterScreen(),
+        '/farmer/home':          (context) => const FarmerHomeScreen(),
         '/farmer/sell/waste-type': (context) => const WasteTypeScreen(),
         '/farmer/sell/quantity': (context) => const QuantityScreen(),
-        '/farmer/sell/photo': (context) => const PhotoScreen(),
+        '/farmer/sell/photo':    (context) => const PhotoScreen(),
         '/farmer/sell/location': (context) => const ConfirmLocationScreen(),
-        '/farmer/sell/success': (context) => const SuccessScreen(),
-        '/farmer/earnings': (context) => const EarningsHistoryScreen(),
-        '/driver/login': (context) => const DriverLoginScreen(),
-        '/driver/route': (context) => const DriverRouteScreen(),
-        '/driver/arrival': (context) => const ArrivalScreen(collectionId: 'test123'),
-        '/driver/weigh': (context) => const WeighInScreen(collectionId: 'test123'),
-        '/driver/quality': (context) => const QualityCheckScreen(collectionId: 'test123'),
-        '/driver/payment': (context) => const PaymentConfirmationScreen(collectionId: 'test123'),
-        '/driver/offline': (context) => const OfflineModeScreen(),
-        '/admin/login': (context) => const AdminLoginScreen(),
-        '/admin/dashboard': (context) => const AdminDashboardScreen(),
-        '/admin/fleet': (context) => const FleetManagementScreen(),
-        '/admin/pricing': (context) => const PriceControllerScreen(),
-        '/admin/inventory': (context) => const InventoryTrackerScreen(),
-        '/admin/farmer': (context) => const FarmerProfileScreen(farmerId: 'farmer123'),
+        '/farmer/sell/success':  (context) => const SuccessScreen(),
+        '/farmer/earnings':      (context) => const EarningsHistoryScreen(),
+        '/driver/login':         (context) => const DriverLoginScreen(),
+        '/driver/route':         (context) => const DriverRouteScreen(),
+        '/driver/arrival':       (context) => const ArrivalScreen(collectionId: 'test123'),
+        '/driver/weigh':         (context) => const WeighInScreen(collectionId: 'test123'),
+        '/driver/quality':       (context) => const QualityCheckScreen(collectionId: 'test123'),
+        '/driver/payment':       (context) => const PaymentConfirmationScreen(collectionId: 'test123'),
+        '/driver/offline':       (context) => const OfflineModeScreen(),
+        '/admin/login':          (context) => const AdminLoginScreen(),
+        '/admin/dashboard':      (context) => const AdminDashboardScreen(),
+        '/admin/fleet':          (context) => const FleetManagementScreen(),
+        '/admin/pricing':        (context) => const PriceControllerScreen(),
+        '/admin/inventory':      (context) => const InventoryTrackerScreen(),
+        '/admin/farmer':         (context) => const FarmerProfileScreen(farmerId: 'farmer123'),
       },
     );
   }
