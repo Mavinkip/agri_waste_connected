@@ -1,0 +1,30 @@
+import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/services/navigation_service.dart';
+
+class Weigh_inScreen extends StatelessWidget {
+  final String collectionId;
+  const Weigh_inScreen({super.key, required this.collectionId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Weigh_in'), backgroundColor: AppColors.primaryBlue),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, size: 80, color: AppColors.primaryBlue),
+            const SizedBox(height: 16),
+            Text('Collection ID: $collectionId'),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => NavigationService.push('/driver/home'),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

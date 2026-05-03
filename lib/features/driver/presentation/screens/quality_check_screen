@@ -1,0 +1,30 @@
+import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/services/navigation_service.dart';
+
+class Quality_checkScreen extends StatelessWidget {
+  final String collectionId;
+  const Quality_checkScreen({super.key, required this.collectionId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Quality_check'), backgroundColor: AppColors.primaryBlue),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, size: 80, color: AppColors.primaryBlue),
+            const SizedBox(height: 16),
+            Text('Collection ID: $collectionId'),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => NavigationService.push('/driver/home'),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
