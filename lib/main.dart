@@ -1,3 +1,5 @@
+import 'core/services/local_storage_service.dart';
+import 'core/services/connectivity_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -49,6 +51,8 @@ void main() async {
   );
 
   await Injection.init();
+  await LocalStorageService.init();
+  await ConnectivityService.init();
   runApp(const MyApp());
 }
 

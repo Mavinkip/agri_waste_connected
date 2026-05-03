@@ -460,60 +460,73 @@ class AdminRepository {
     required DateTime endDate,
   }) async {
     return ReportData(reportUrl: '', summary: {});
-  // ─── LOCATION MANAGEMENT ───
+    // ─── LOCATION MANAGEMENT ───
 
-  Future<List<County>> getLocations() async {
-    try {
-      final snapshot = await _firestore.collection('locations').doc('kenya_counties').get();
-      if (!snapshot.exists) {
+    Future<List<County>> getLocations() async {
+      try {
+        final snapshot = await _firestore
+            .collection('locations')
+            .doc('kenya_counties')
+            .get();
+        if (!snapshot.exists) {
+          return KenyaLocations.getDefaultCounties();
+        }
+        final data = snapshot.data()!;
+        return (data['counties'] as List)
+            .map((c) => County.fromJson(c))
+            .toList();
+      } catch (e) {
         return KenyaLocations.getDefaultCounties();
       }
-      final data = snapshot.data()!;
-      return (data['counties'] as List).map((c) => County.fromJson(c)).toList();
-    } catch (e) {
-      return KenyaLocations.getDefaultCounties();
     }
-  }
 
-  Future<bool> saveLocations(List<County> counties) async {
-    try {
-      await _firestore.collection('locations').doc('kenya_counties').set({
-        'counties': counties.map((c) => c.toJson()).toList(),
-        'lastUpdated': DateTime.now().toIso8601String(),
-      });
-      return true;
-    } catch (e) {
-      return false;
+    Future<bool> saveLocations(List<County> counties) async {
+      try {
+        await _firestore.collection('locations').doc('kenya_counties').set({
+          'counties': counties.map((c) => c.toJson()).toList(),
+          'lastUpdated': DateTime.now().toIso8601String(),
+        });
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
-  }
 
-  Future<List<CollectionSchedule>> getCollectionSchedules() async {
-    try {
-      final snapshot = await _firestore.collection('collection_schedules').get();
-      return snapshot.docs.map((doc) => CollectionSchedule.fromJson(doc.data())).toList();
-    } catch (e) {
-      return [];
+    Future<List<CollectionSchedule>> getCollectionSchedules() async {
+      try {
+        final snapshot =
+            await _firestore.collection('collection_schedules').get();
+        return snapshot.docs
+            .map((doc) => CollectionSchedule.fromJson(doc.data()))
+            .toList();
+      } catch (e) {
+        return [];
+      }
     }
-  }
 
-  Future<bool> saveCollectionSchedule(CollectionSchedule schedule) async {
-    try {
-      await _firestore.collection('collection_schedules').doc(schedule.id).set(schedule.toJson());
-      return true;
-    } catch (e) {
-      return false;
+    Future<bool> saveCollectionSchedule(CollectionSchedule schedule) async {
+      try {
+        await _firestore
+            .collection('collection_schedules')
+            .doc(schedule.id)
+            .set(schedule.toJson());
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
-  }
 
-  Future<bool> deleteCollectionSchedule(String scheduleId) async {
-    try {
-      await _firestore.collection('collection_schedules').doc(scheduleId).delete();
-      return true;
-    } catch (e) {
-      return false;
+    Future<bool> deleteCollectionSchedule(String scheduleId) async {
+      try {
+        await _firestore
+            .collection('collection_schedules')
+            .doc(scheduleId)
+            .delete();
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
-  }
-
   }
 }
 
