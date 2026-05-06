@@ -13,6 +13,9 @@ import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/language_selection_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/farmer/presentation/screens/profile_screen.dart';
+import 'features/farmer/presentation/screens/notifications_screen.dart';
+import 'features/farmer/presentation/screens/help_screen.dart';
 import 'features/farmer/presentation/screens/farmer_home_screen.dart';
 import 'features/farmer/presentation/screens/sell_waste/waste_type_screen.dart';
 import 'features/farmer/presentation/screens/sell_waste/quantity_screen.dart';
@@ -85,6 +88,9 @@ class MyApp extends StatelessWidget {
           '/login': (context) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
           '/farmer/home': (context) => const FarmerHomeScreen(),
+          '/farmer/profile': (context) => const ProfileScreen(),
+          '/farmer/notifications': (context) => const NotificationsScreen(),
+          '/farmer/help': (context) => const HelpScreen(),
           '/farmer/sell/waste-type': (context) => const WasteTypeScreen(),
           '/farmer/sell/quantity': (context) => const QuantityScreen(),
           '/farmer/sell/photo': (context) => const PhotoScreen(),

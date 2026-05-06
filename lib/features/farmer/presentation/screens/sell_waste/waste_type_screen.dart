@@ -1,176 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/sell_wizard_cubit.dart';
-import '../../bloc/farmer_bloc.dart';
 import '../../../../../shared/models/waste_listing_model.dart';
-import '../../../data/repositories/farmer_repository.dart';
-import '../../../../../../core/di/injection.dart';
+import '../../widgets/farmer_app_menu.dart';
 
-class WasteTypeScreen extends StatefulWidget {
+class WasteTypeScreen extends StatelessWidget {
   const WasteTypeScreen({super.key});
-
-  @override
-  State<WasteTypeScreen> createState() => _WasteTypeScreenState();
-}
-
-class _WasteTypeScreenState extends State<WasteTypeScreen> {
-  PricingInfo? _pricingInfo;
-  double? _consistencyScore;
-
-  @override
-  void initState() {
-    super.initState();
-    final farmerBloc = sl<FarmerBloc>()
-      ..add(const LoadPricingInfo())
-      ..add(const LoadConsistencyScore());
-
-    farmerBloc.stream.listen((state) {
-      if (state is PricingInfoLoaded) {
-        setState(() => _pricingInfo = state.pricingInfo);
-      } else if (state is ConsistencyScoreLoaded) {
-        setState(() => _consistencyScore = state.score);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<SellWizardCubit>();
-    if (cubit == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('Select Waste Type'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () =>
-              Navigator.of(context).pushReplacementNamed('/farmer/home'),
+        title: const Text('Sell Waste'),
+        centerTitle: true,
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pushReplacementNamed('/farmer/home')),
+        actions: const [FarmerAppMenu(currentScreen: 'home')],
+      ),
+      body: Column(children: [
+        // Progress bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: Colors.white,
+          child: Row(children: [
+            _step(1, true), _line(), _step(2, false), _line(), _step(3, false), _line(), _step(4, false),
+          ]),
         ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'home') {
-                Navigator.of(context)
-                    .pushNamedAndRemoveUntil('/farmer/home', (route) => false);
-              } else if (value == 'earnings') {
-                Navigator.of(context).pushNamed('/farmer/earnings');
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'home', child: Text('Home')),
-              const PopupMenuItem(value: 'earnings', child: Text('Earnings')),
+        const SizedBox(height: 8),
+        // Title
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text('What type of waste do you have?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text('Select one to continue', style: TextStyle(fontSize: 14, color: Colors.grey)),
+        ),
+        const SizedBox(height: 12),
+        // Waste type list
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: [
+              _tile(context, cubit, Icons.grass_outlined, 'Crop Residue', 'Maize stalks, wheat straw, rice straw', WasteType.cropResidue, const Color(0xFF2E7D32)),
+              _tile(context, cubit, Icons.eco_outlined, 'Vegetable Waste', 'Kales, cabbage, tomato rejects', WasteType.vegetableWaste, const Color(0xFF558B2F)),
+              _tile(context, cubit, Icons.local_florist_outlined, 'Fruit Waste', 'Mango, banana, avocado waste', WasteType.fruitWaste, const Color(0xFFFF6F00)),
+              _tile(context, cubit, Icons.pets_outlined, 'Livestock Manure', 'Cow, goat, chicken manure', WasteType.livestockManure, const Color(0xFF5D4037)),
+              _tile(context, cubit, Icons.coffee_outlined, 'Coffee Husks', 'Coffee processing waste', WasteType.coffeeHusks, const Color(0xFF4E342E)),
+              _tile(context, cubit, Icons.grain_outlined, 'Rice Hulls', 'Rice milling byproduct', WasteType.riceHulls, const Color(0xFFFFA000)),
+              _tile(context, cubit, Icons.agriculture_outlined, 'Corn Stover', 'Maize stalks after harvest', WasteType.cornStover, const Color(0xFF00897B)),
+              _tile(context, cubit, Icons.category_outlined, 'Other Waste', 'Any other agricultural waste', WasteType.other, const Color(0xFF78909C)),
             ],
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            LinearProgressIndicator(
-                value: 0.25, backgroundColor: Colors.grey.shade200),
-            const SizedBox(height: 20),
-            const Text('What are you selling?',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(
-              _pricingInfo != null
-                  ? 'Prices set by admin • Tap to select'
-                  : 'Loading prices...',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.9,
-                children: [
-                  _buildCard(context, cubit, Icons.grass, 'Crop Residue',
-                      WasteType.cropResidue, Colors.green),
-                  _buildCard(context, cubit, Icons.local_florist, 'Fruit Waste',
-                      WasteType.fruitWaste, Colors.orange),
-                  _buildCard(context, cubit, Icons.eco, 'Vegetable Waste',
-                      WasteType.vegetableWaste, Colors.lightGreen),
-                  _buildCard(context, cubit, Icons.pets, 'Livestock Manure',
-                      WasteType.livestockManure, Colors.brown),
-                  _buildCard(context, cubit, Icons.coffee, 'Coffee Husks',
-                      WasteType.coffeeHusks, Colors.brown.shade700),
-                  _buildCard(context, cubit, Icons.grain, 'Rice Hulls',
-                      WasteType.riceHulls, Colors.amber),
-                  _buildCard(context, cubit, Icons.agriculture, 'Corn Stover',
-                      WasteType.cornStover, Colors.teal),
-                  _buildCard(context, cubit, Icons.category, 'Other Waste',
-                      WasteType.other, Colors.grey),
-                ],
-              ),
-            ),
-          ],
         ),
-      ),
+      ]),
     );
   }
 
-  Widget _buildCard(BuildContext context, SellWizardCubit cubit, IconData icon,
-      String label, WasteType type, Color color) {
-    // Get price from admin-set pricing
-    String priceText = 'Loading...';
-    if (_pricingInfo != null) {
-      final price = _pricingInfo!.getPriceForWasteType(
-        type.name, // Uses enum name like "cropResidue" as key
-        _consistencyScore ?? 0,
-      );
-      priceText = 'KSh ${price.toStringAsFixed(2)}/kg';
-    }
+  Widget _step(int number, bool active) {
+    return Container(
+      width: 28, height: 28,
+      decoration: BoxDecoration(
+        color: active ? const Color(0xFF2D5A27) : Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Center(child: Text('$number', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13))),
+    );
+  }
 
-    return GestureDetector(
-      onTap: () {
-        cubit.selectWasteType(type);
-        Navigator.of(context).pushNamed('/farmer/sell/quantity');
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+  Widget _line() => Expanded(child: Container(height: 2, color: Colors.grey.shade300));
+
+  Widget _tile(BuildContext context, SellWizardCubit cubit, IconData icon, String title, String subtitle, WasteType type, Color color) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: InkWell(
+        onTap: () {
+          cubit.selectWasteType(type);
+          Navigator.of(context).pushNamed('/farmer/sell/quantity');
+        },
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(children: [
             Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 28, color: color),
+              width: 52, height: 52,
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
+              child: Icon(icon, color: color, size: 28),
             ),
-            const SizedBox(height: 10),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 13, height: 1.2)),
-            const SizedBox(height: 4),
-            Text(priceText,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-          ],
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 2),
+                Text(subtitle, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+              ]),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+              child: Text('Select', style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12)),
+            ),
+          ]),
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }

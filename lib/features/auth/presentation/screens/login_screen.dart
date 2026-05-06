@@ -96,6 +96,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pushNamed('/forgot-password'),
+                    child: const Text('Forgot Password?'),
+                  ),
                 TextButton(onPressed: () => Navigator.of(context).pushNamed('/register'), child: const Text("Don't have an account? Register")),
               ]),
             ),

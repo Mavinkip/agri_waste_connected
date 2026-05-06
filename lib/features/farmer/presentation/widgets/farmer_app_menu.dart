@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/di/injection.dart';
-import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 
 class FarmerAppMenu extends StatelessWidget {
   final String currentScreen;
@@ -14,24 +11,18 @@ class FarmerAppMenu extends StatelessWidget {
       onSelected: (value) {
         if (!context.mounted) return;
         switch (value) {
-          case 'home':
-            Navigator.of(context).pushNamedAndRemoveUntil('/farmer/home', (route) => false);
-          case 'earnings':
-            Navigator.of(context).pushNamed('/farmer/earnings');
-          case 'sell':
-            Navigator.of(context).pushNamed('/farmer/sell/waste-type');
-          case 'schedule':
-            Navigator.of(context).pushNamed('/farmer/schedule');
-          case 'logout':
-            context.read<AuthBloc>().add(AuthLogoutRequested());
-            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          case 'home': Navigator.of(context).pushNamedAndRemoveUntil('/farmer/home', (_) => false);
+          case 'profile': Navigator.of(context).pushNamed('/farmer/profile');
+          case 'notifications': Navigator.of(context).pushNamed('/farmer/notifications');
+          case 'help': Navigator.of(context).pushNamed('/farmer/help');
+          case 'logout': Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
         }
       },
       itemBuilder: (context) => [
         _item(Icons.home, 'Home', 'home'),
-        _item(Icons.account_balance_wallet, 'Earnings', 'earnings'),
-        _item(Icons.add_circle_outline, 'Sell Waste', 'sell'),
-        _item(Icons.schedule, 'Schedule', 'schedule'),
+        _item(Icons.person, 'Profile', 'profile'),
+        _item(Icons.notifications, 'Notifications', 'notifications'),
+        _item(Icons.help_outline, 'Help', 'help'),
         const PopupMenuDivider(),
         _item(Icons.logout, 'Logout', 'logout'),
       ],
