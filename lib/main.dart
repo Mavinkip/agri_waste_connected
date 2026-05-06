@@ -13,6 +13,7 @@ import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/language_selection_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/auth/presentation/screens/forgot_password_screen.dart';
 import 'features/farmer/presentation/screens/profile_screen.dart';
 import 'features/farmer/presentation/screens/notifications_screen.dart';
 import 'features/farmer/presentation/screens/help_screen.dart';
@@ -87,6 +88,7 @@ class MyApp extends StatelessWidget {
           '/language': (context) => const LanguageSelectionScreen(),
           '/login': (context) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
+          '/forgot-password': (context) => ForgotPasswordScreen(),
           '/farmer/home': (context) => const FarmerHomeScreen(),
           '/farmer/profile': (context) => const ProfileScreen(),
           '/farmer/notifications': (context) => const NotificationsScreen(),

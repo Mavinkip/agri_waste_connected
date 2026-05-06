@@ -24,7 +24,7 @@ class SuccessScreen extends StatelessWidget {
             const SizedBox(height: 24),
             const Text('Order Placed! 🎉', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            const Text('A driver will come to collect your waste', textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: Colors.grey)),
+            const Text('Your order has been placed successfully', textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: Colors.grey)),
             const SizedBox(height: 24),
 
             // Ticket card
@@ -36,7 +36,7 @@ class SuccessScreen extends StatelessWidget {
                 const Divider(height: 20),
                 _row('Status', 'Pending'),
                 const Divider(height: 20),
-                _row('Pickup', 'Within 48 hours'),
+                _row('Pickup', 'You will be notified'),
               ]),
             ),
             const SizedBox(height: 20),

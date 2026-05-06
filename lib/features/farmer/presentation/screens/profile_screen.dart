@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../widgets/profile_notifier.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/farmer_app_menu.dart';
 
@@ -11,9 +13,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _nameController = TextEditingController(text: 'Farmer');
-  final _phoneController = TextEditingController(text: '07XX XXX XXX');
-  final _locationController = TextEditingController(text: 'Nakuru, Kenya');
+  final _nameController = TextEditingController(text: '');
+  final _phoneController = TextEditingController(text: '');
+  final _locationController = TextEditingController(text: '');
   final _imagePicker = ImagePicker();
   
   String? _profileImagePath;
@@ -62,6 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _saveProfile() {
+    ProfileNotifier.instance.save(name: _nameController.text.trim(), photoPath: _profileImagePath);
     setState(() => _editing = false);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Profile saved!'), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),

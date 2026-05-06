@@ -1,6 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../widgets/phone_auth_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -10,95 +10,100 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _phoneController = TextEditingController();
-  final _otpController = TextEditingController();
+  final _codeController = TextEditingController();
   final _newPasswordController = TextEditingController();
-  final _phoneAuth = PhoneAuthService();
-  
+  final _formKey = GlobalKey<FormState>();
+  final _auth = FirebaseAuth.instance;
+
   bool _loading = false;
-  bool _otpSent = false;
-  bool _verified = false;
+  bool _codeSent = false;
   String? _error;
-
-  void _sendOTP() {
-    final phone = _phoneController.text.trim();
-    if (phone.length < 10) {
-      setState(() => _error = 'Enter valid phone number');
-      return;
-    }
-    setState(() { _loading = true; _error = null; });
-    _phoneAuth.sendOTP(
-      phoneNumber: phone,
-      onCodeSent: (vid) => setState(() { _otpSent = true; _loading = false; }),
-      onError: (e) => setState(() { _error = e; _loading = false; }),
-    );
-  }
-
-  void _verifyOTP() async {
-    if (_otpController.text.length < 4) return;
-    setState(() => _loading = true);
-    final result = await _phoneAuth.verifyOTP(_otpController.text);
-    if (mounted) {
-      if (result != null) {
-        setState(() { _verified = true; _loading = false; });
-      } else {
-        setState(() { _error = 'Invalid OTP'; _loading = false; });
-      }
-    }
-  }
-
-  void _resetPassword() {
-    if (_newPasswordController.text.length < 6) {
-      setState(() => _error = 'Password must be at least 6 characters');
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password reset! Please login.'), backgroundColor: Colors.green));
-    Navigator.of(context).pop();
-  }
+  String? _verificationId;
+  String? _successMsg;
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _otpController.dispose();
+    _codeController.dispose();
     _newPasswordController.dispose();
     super.dispose();
+  }
+
+  String _cleanPhone(String p) => p.replaceAll(RegExp(r'[^0-9]'), '');
+
+  Future<void> _sendCode() async {
+    final phone = _cleanPhone(_phoneController.text);
+    if (phone.length < 10) { setState(() => _error = 'Enter a valid phone number'); return; }
+    setState(() { _loading = true; _error = null; });
+
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: '+254${phone.substring(phone.length - 9)}',
+        verificationCompleted: (_) {},
+        verificationFailed: (e) => setState(() { _error = 'Failed to send code: ${e.message}'; _loading = false; }),
+        codeSent: (verificationId, _) => setState(() { _verificationId = verificationId; _codeSent = true; _loading = false; _successMsg = 'A verification code has been sent to your phone'; }),
+        codeAutoRetrievalTimeout: (_) {},
+      );
+    } catch (e) {
+      setState(() { _error = 'Failed to send code. Check your network.'; _loading = false; });
+    }
+  }
+
+  Future<void> _verifyAndReset() async {
+    final code = _codeController.text.trim();
+    if (code.length < 4 || _verificationId == null) { setState(() => _error = 'Enter the verification code'); return; }
+    if (_newPasswordController.text.length < 6) { setState(() => _error = 'Password must be at least 6 characters'); return; }
+    setState(() { _loading = true; _error = null; });
+
+    try {
+      final credential = PhoneAuthProvider.credential(verificationId: _verificationId!, smsCode: code);
+      await _auth.signInWithCredential(credential);
+      await _auth.currentUser?.updatePassword(_newPasswordController.text);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Row(children: [Icon(Icons.check_circle, color: Colors.white), SizedBox(width: 8), Text('Password reset! Please login.')]), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating));
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      setState(() { _error = 'Invalid code or reset failed. Try again.'; _loading = false; });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Forgot Password')),
+      backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(title: const Text('Reset Password'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const SizedBox(height: 20),
-          const Icon(Icons.lock_reset, size: 64, color: AppColors.primaryGreen),
-          const SizedBox(height: 16),
-          const Text('Reset Password', textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(_verified ? 'Enter new password' : _otpSent ? 'Enter OTP sent to your phone' : 'Enter phone number', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 24),
-
-          if (!_otpSent) ...[
-            TextField(controller: _phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone Number', prefixIcon: Icon(Icons.phone), border: OutlineInputBorder())),
+        child: Form(
+          key: _formKey,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const SizedBox(height: 20),
+            const Icon(Icons.lock_reset, size: 64, color: AppColors.primaryGreen),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loading ? null : _sendOTP, style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen, padding: const EdgeInsets.all(14)), child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Send OTP', style: TextStyle(fontSize: 16))),
-          ] else if (!_verified) ...[
-            TextField(controller: _otpController, keyboardType: TextInputType.number, maxLength: 6, decoration: const InputDecoration(labelText: 'OTP Code', prefixIcon: Icon(Icons.pin), border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            ElevatedButton(onPressed: _loading ? null : _verifyOTP, style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen, padding: const EdgeInsets.all(14)), child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Verify OTP', style: TextStyle(fontSize: 16))),
-            TextButton(onPressed: _sendOTP, child: const Text('Resend OTP')),
-          ] else ...[
-            TextField(controller: _newPasswordController, obscureText: true, decoration: const InputDecoration(labelText: 'New Password', prefixIcon: Icon(Icons.lock), border: OutlineInputBorder())),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _resetPassword, style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen, padding: const EdgeInsets.all(14)), child: const Text('Reset Password', style: TextStyle(fontSize: 16))),
-          ],
+            const Text('Reset Your Password', textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(_codeSent ? 'Enter the code sent to your phone' : 'Enter your phone number', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 24),
 
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)), child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13))),
-          ],
-        ]),
+            if (!_codeSent) ...[
+              TextFormField(controller: _phoneController, keyboardType: TextInputType.phone, maxLength: 13, decoration: const InputDecoration(labelText: 'Phone Number', prefixIcon: Icon(Icons.phone), hintText: '0712345678', border: OutlineInputBorder(), counterText: ''), validator: (v) => _cleanPhone(v ?? '').length < 10 ? 'Enter valid number' : null),
+              const SizedBox(height: 16),
+              SizedBox(height: 52, child: ElevatedButton(onPressed: _loading ? null : _sendCode, style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Send Verification Code', style: TextStyle(fontSize: 16)))),
+            ] else ...[
+              if (_successMsg != null) Container(padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)), child: Row(children: [const Icon(Icons.check_circle, color: Colors.green, size: 18), const SizedBox(width: 8), Text(_successMsg!, style: const TextStyle(color: Colors.green, fontSize: 13))])),
+              TextFormField(controller: _codeController, keyboardType: TextInputType.number, maxLength: 6, decoration: const InputDecoration(labelText: 'Verification Code', prefixIcon: Icon(Icons.pin), hintText: '123456', border: OutlineInputBorder(), counterText: ''), validator: (v) => v == null || v.length < 4 ? 'Enter code' : null),
+              const SizedBox(height: 14),
+              TextFormField(controller: _newPasswordController, obscureText: true, decoration: const InputDecoration(labelText: 'New Password', prefixIcon: Icon(Icons.lock), border: OutlineInputBorder()), validator: (v) => v == null || v.length < 6 ? 'Min 6 characters' : null),
+              const SizedBox(height: 16),
+              SizedBox(height: 52, child: ElevatedButton(onPressed: _loading ? null : _verifyAndReset, style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Reset Password', style: TextStyle(fontSize: 16)))),
+              TextButton(onPressed: _sendCode, child: const Text('Resend Code')),
+            ],
+
+            if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)), child: Row(children: [const Icon(Icons.error_outline, color: Colors.red, size: 18), const SizedBox(width: 8), Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)))]))),
+          ]),
+        ),
       ),
     );
   }
