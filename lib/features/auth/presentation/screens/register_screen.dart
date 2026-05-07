@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -63,10 +64,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() { _error = 'Something went wrong. Please try again.'; _loading = false; });
     }
   }
+=======
+import 'package:flutter/material.dart';
+import '../../../../../core/services/navigation_service.dart';
+
+class RegisterScreen extends StatelessWidget {
+  const RegisterScreen({super.key});
+>>>>>>> upstream/master
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(title: const Text('Register'), centerTitle: true),
       body: SingleChildScrollView(
@@ -97,6 +106,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 14),
             TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Already have an account? Login')),
           ]),
+=======
+      appBar: AppBar(title: const Text('Register')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const TextField(decoration: InputDecoration(labelText: 'Full Name')),
+            const TextField(decoration: InputDecoration(labelText: 'Phone Number')),
+            const TextField(decoration: InputDecoration(labelText: 'Password'), obscureText: true),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                NavigationService.pop();
+              },
+              child: const Text('Register'),
+            ),
+          ],
+>>>>>>> upstream/master
         ),
       ),
     );

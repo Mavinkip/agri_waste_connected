@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+=======
+import '../../../../../core/services/navigation_service.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+>>>>>>> upstream/master
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
+<<<<<<< HEAD
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scale;
@@ -30,11 +39,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void dispose() {
     _controller.dispose();
     super.dispose();
+=======
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-advance to login after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        NavigationService.pushReplacement('/login');
+      }
+    });
+>>>>>>> upstream/master
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(colors: [Color(0xFF1B5E20), Color(0xFF4CAF50)], begin: Alignment.topLeft, end: Alignment.bottomRight),
@@ -61,6 +83,20 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ]),
           ),
+=======
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Text('Agri-Waste Connect'),
+            SizedBox(height: 16),
+            Text('Turn Waste into Wealth'),
+            SizedBox(height: 16),
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('No smartphone? Dial *384*50#'),
+          ],
+>>>>>>> upstream/master
         ),
       ),
     );

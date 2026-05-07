@@ -11,7 +11,11 @@ class DriverHomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+<<<<<<< HEAD
         title: const Text(AppStrings.driverHome),
+=======
+        title: Text(AppStrings.driverHome),
+>>>>>>> upstream/master
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
@@ -51,7 +55,11 @@ class DriverHomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> upstream/master
             // Today's Schedule
             const Text(
               "Today's Collections",
@@ -99,7 +107,11 @@ class DriverHomeScreen extends StatelessWidget {
       ),
     );
   }
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> upstream/master
   Widget _buildStat(String label, String value, String subtitle) {
     return Column(
       children: [
@@ -128,7 +140,11 @@ class DriverHomeScreen extends StatelessWidget {
       ],
     );
   }
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> upstream/master
   Widget _buildCollectionCard({
     required String farmer,
     required String wasteType,
@@ -148,8 +164,12 @@ class DriverHomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('$wasteType • $weight'),
+<<<<<<< HEAD
             Text('📍 $distance away',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+=======
+            Text('📍 $distance away', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+>>>>>>> upstream/master
           ],
         ),
         trailing: ElevatedButton(

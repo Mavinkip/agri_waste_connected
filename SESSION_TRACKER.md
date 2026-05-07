@@ -321,7 +321,89 @@ Create unstyled text-only UI screens following the UX documentation. No colors, 
 | `payment_confirmation_screen.dart` | `/driver/payment` | D6 - Success screen with receipt |
 | `offline_mode_screen.dart` | `/driver/offline` | D7 - No internet indicator |
 
+<<<<<<< HEAD
 #me doestn open and the whole machine becomes slow
+=======
+#### Admin Dashboard Screens (6 files)
+| Screen | Route | Documentation Reference |
+|--------|-------|------------------------|
+| `admin_login_screen.dart` | `/admin/login` | R1 - Email + password |
+| `admin_dashboard_screen.dart` | `/admin/dashboard` | R2 - KPIs, map, urgent pickups |
+| `fleet_management_screen.dart` | `/admin/fleet` | R3 - Trucks and drivers |
+| `price_controller_screen.dart` | `/admin/pricing` | R4 - Edit prices per waste type |
+| `inventory_tracker_screen.dart` | `/admin/inventory` | R5 - Stock levels |
+| `farmer_profile_screen.dart` | `/admin/farmer` | R6 - Individual farmer details |
+
+### Status: ✅ COMPLETE (22 screens total)
+
+---
+
+## 🐛 ALL ERRORS ENCOUNTERED & FIXED
+
+### Error 1: Import Path Errors
+**Problem:** Wrong number of `../` in import statements
+**Solution:** From `lib/features/*/presentation/screens/` need 5 `../` to reach `lib/`
+```dart
+import '../../../../../core/constants/app_colors.dart';
+lib/
+├── main.dart ✅
+├── core/
+│   ├── constants/
+│   │   ├── app_colors.dart ✅
+│   │   └── app_strings.dart ✅
+│   ├── di/
+│   │   └── injection.dart ✅
+│   ├── network/
+│   │   └── api_client.dart ✅
+│   ├── router/
+│   │   └── app_router.dart ✅
+│   ├── services/
+│   │   ├── connectivity_service.dart ✅
+│   │   └── navigation_service.dart ✅
+│   └── theme/
+│       └── app_theme.dart ✅
+├── shared/
+│   ├── models/
+│   │   ├── user_model.dart ✅
+│   │   └── waste_listing_model.dart ✅
+│   └── services/
+│       └── offline_sync_repository.dart ✅
+└── features/
+    ├── auth/
+    │   ├── data/repositories/
+    │   │   └── auth_repository.dart ✅
+    │   └── presentation/
+    │       ├── bloc/
+    │       │   ├── auth_bloc.dart ✅
+    │       │   ├── auth_event.dart ✅
+    │       │   └── auth_state.dart ✅
+    │       └── screens/
+    │           ├── splash_screen.dart ✅
+    │           ├── language_selection_screen.dart ✅
+    │           ├── login_screen.dart ✅
+    │           └── register_screen.dart ✅
+    ├── farmer/
+    │   ├── data/repositories/
+    │   │   ├── farmer_repository.dart ✅
+    │   │   ├── listing_repository.dart ✅
+    │   │   └── wallet_repository.dart ✅
+    │   └── presentation/
+    │       ├── bloc/
+    │       │   ├── farmer_bloc.dart ✅
+    │       │   ├── farmer_event.dart ✅
+    │       │   ├── farmer_state.dart ✅
+    │       │   ├── sell_wizard_cubit.dart ✅
+    │       │   └── sell_wizard_state.dart ✅
+    │       └── screens/
+    │           ├── farmer_home_screen.dart ✅
+    │           ├── earnings_history_screen.dart ✅
+    │           └── sell_waste/
+    │               ├── waste_type_screen.dart ✅
+    │               ├── quantity_screen.dart ✅
+    │               ├── photo_screen.dart ✅
+    │               ├── confirm_location_screen.dart ✅
+    │               └── success_screen.dart ✅
+>>>>>>> upstream/master
     ├── driver/
     │   ├── data/repositories/
     │   │   └── collection_repository.dart ✅
