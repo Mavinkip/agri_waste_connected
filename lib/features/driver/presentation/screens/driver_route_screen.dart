@@ -27,9 +27,15 @@ class DriverRouteScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(border: Border.all()),
+<<<<<<< HEAD
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+=======
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+>>>>>>> upstream/master
                   Text('Green Hill Farm'),
                   Text('Distance: 3.2 km'),
                   Text('Est. Waste: 500 kg'),

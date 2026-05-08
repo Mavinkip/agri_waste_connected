@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -52,10 +53,18 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() { _error = 'Something went wrong. Please try again.'; _loading = false; });
     }
   }
+=======
+import 'package:flutter/material.dart';
+import '../../../../../core/services/navigation_service.dart';
+
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
+>>>>>>> upstream/master
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -114,6 +123,69 @@ class _LoginScreenState extends State<LoginScreen> {
               ]),
             ]),
           ),
+=======
+      appBar: AppBar(title: const Text('Login')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('Agri-Waste Connect', style: TextStyle(fontSize: 24)),
+            const SizedBox(height: 48),
+            const TextField(
+              decoration: InputDecoration(
+                labelText: 'Phone Number / Email',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const TextField(
+              decoration: InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Default to Farmer for demo
+                  NavigationService.pushReplacement('/farmer/home');
+                },
+                child: const Text('Login as Farmer'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  NavigationService.pushReplacement('/driver/login');
+                },
+                child: const Text('Login as Driver'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  NavigationService.pushReplacement('/admin/login');
+                },
+                child: const Text('Login as Admin'),
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: () {
+                NavigationService.push('/register');
+              },
+              child: const Text('New User? Register Here'),
+            ),
+          ],
+>>>>>>> upstream/master
         ),
       ),
     );

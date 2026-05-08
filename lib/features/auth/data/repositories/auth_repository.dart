@@ -8,14 +8,27 @@ class AuthRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
+<<<<<<< HEAD
   AuthRepository({required FirebaseAuth auth, required FirebaseFirestore firestore})
       : _auth = auth, _firestore = firestore;
 
   String _phoneToEmail(String phone) => '${phone.replaceAll(RegExp(r'[^0-9]'), '')}@agri.local';
+=======
+  AuthRepository({
+    required FirebaseAuth auth,
+    required FirebaseFirestore firestore,
+  })  : _auth = auth,
+        _firestore = firestore;
+
+  // Convert phone to email format for Firebase Auth
+  String _phoneToEmail(String phone) =>
+      '${phone.replaceAll(RegExp(r'[^0-9]'), '')}@agri.local';
+>>>>>>> upstream/master
 
   Future<AuthResponse> login(String phoneNumber, String password) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(
+<<<<<<< HEAD
         email: _phoneToEmail(phoneNumber), password: password);
 
       // Try Firestore, return basic user if it fails
@@ -37,12 +50,38 @@ class AuthRepository {
       return AuthResponse.failure(message: e.message ?? 'Login failed');
     } catch (e) {
       return AuthResponse.failure(message: 'Login failed. Try again.');
+=======
+        email: _phoneToEmail(phoneNumber),
+        password: password,
+      );
+
+      final doc = await _firestore
+          .collection('users')
+          .doc(credential.user!.uid)
+          .get();
+
+      if (!doc.exists) {
+        return AuthResponse.failure(message: 'User profile not found');
+      }
+
+      final user = UserModel.fromJson({...doc.data()!, 'id': doc.id});
+      final token = await credential.user!.getIdToken() ?? '';
+
+      await _saveUserLocally(user);
+      return AuthResponse.success(user: user, token: token);
+    } on FirebaseAuthException catch (e) {
+      return AuthResponse.failure(
+          message: e.message ?? 'Login failed. Please try again.');
+    } catch (e) {
+      return AuthResponse.failure(message: 'Login failed. Please try again.');
+>>>>>>> upstream/master
     }
   }
 
   Future<AuthResponse> register(RegisterData data) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
+<<<<<<< HEAD
         email: _phoneToEmail(data.phoneNumber), password: data.password);
 
       final user = UserModel(
@@ -62,6 +101,42 @@ class AuthRepository {
       return AuthResponse.failure(message: e.message ?? 'Registration failed');
     } catch (e) {
       return AuthResponse.failure(message: 'Registration failed. Try again.');
+=======
+        email: _phoneToEmail(data.phoneNumber),
+        password: data.password,
+      );
+
+      final userDoc = {
+        'phoneNumber': data.phoneNumber,
+        'fullName': data.fullName,
+        'role': data.role.name,
+        'isVerified': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      await _firestore
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set(userDoc);
+
+      final user = UserModel(
+        id: credential.user!.uid,
+        phoneNumber: data.phoneNumber,
+        fullName: data.fullName,
+        role: data.role,
+        createdAt: DateTime.now(),
+      );
+
+      final token = await credential.user!.getIdToken() ?? '';
+      await _saveUserLocally(user);
+      return AuthResponse.success(user: user, token: token);
+    } on FirebaseAuthException catch (e) {
+      return AuthResponse.failure(
+          message: e.message ?? 'Registration failed. Please try again.');
+    } catch (e) {
+      return AuthResponse.failure(
+          message: 'Registration failed. Please try again.');
+>>>>>>> upstream/master
     }
   }
 
@@ -72,6 +147,7 @@ class AuthRepository {
   }
 
   Future<UserModel?> getCurrentUser() async {
+<<<<<<< HEAD
     try {
       final prefs = await SharedPreferences.getInstance();
       final data = prefs.getString('user_data');
@@ -81,6 +157,32 @@ class AuthRepository {
   }
 
   Future<bool> isLoggedIn() async => _auth.currentUser != null;
+=======
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return null;
+
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .get();
+      if (!doc.exists) return null;
+      return UserModel.fromJson({...doc.data()!, 'id': doc.id});
+    } catch (e) {
+      // Try local cache
+      final prefs = await SharedPreferences.getInstance();
+      final userData = prefs.getString('user_data');
+      if (userData != null) {
+        return UserModel.fromJson(jsonDecode(userData));
+      }
+      return null;
+    }
+  }
+
+  Future<bool> isLoggedIn() async {
+    return _auth.currentUser != null;
+  }
+>>>>>>> upstream/master
 
   Future<void> _saveUserLocally(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
@@ -89,18 +191,39 @@ class AuthRepository {
 
   Future<bool> verifyPhoneNumber(String phoneNumber) async {
     try {
+<<<<<<< HEAD
       final methods = await _auth.fetchSignInMethodsForEmail(_phoneToEmail(phoneNumber));
       return methods.isNotEmpty;
     } catch (_) {
+=======
+      final methods = await _auth.fetchSignInMethodsForEmail(
+          _phoneToEmail(phoneNumber));
+      return methods.isNotEmpty;
+    } catch (e) {
+>>>>>>> upstream/master
       return false;
     }
   }
 }
 
 class RegisterData {
+<<<<<<< HEAD
   final String fullName, phoneNumber, password;
   final UserRole role;
   RegisterData({required this.fullName, required this.phoneNumber, required this.password, required this.role});
+=======
+  final String fullName;
+  final String phoneNumber;
+  final String password;
+  final UserRole role;
+
+  RegisterData({
+    required this.fullName,
+    required this.phoneNumber,
+    required this.password,
+    required this.role,
+  });
+>>>>>>> upstream/master
 }
 
 class AuthResponse {
@@ -108,9 +231,24 @@ class AuthResponse {
   final UserModel? user;
   final String? token;
   final String? message;
+<<<<<<< HEAD
   AuthResponse._({required this.success, this.user, this.token, this.message});
   factory AuthResponse.success({required UserModel user, required String token}) =>
       AuthResponse._(success: true, user: user, token: token);
+=======
+
+  AuthResponse._({
+    required this.success,
+    this.user,
+    this.token,
+    this.message,
+  });
+
+  factory AuthResponse.success(
+          {required UserModel user, required String token}) =>
+      AuthResponse._(success: true, user: user, token: token);
+
+>>>>>>> upstream/master
   factory AuthResponse.failure({required String message}) =>
       AuthResponse._(success: false, message: message);
 }

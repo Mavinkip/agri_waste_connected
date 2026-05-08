@@ -14,16 +14,27 @@ class AdminLoginScreen extends StatelessWidget {
           children: [
             const Text('Recycle Farm Manager Login'),
             const SizedBox(height: 32),
+<<<<<<< HEAD
             const TextField(
               decoration: InputDecoration(
+=======
+            TextField(
+              decoration: const InputDecoration(
+>>>>>>> upstream/master
                 labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
+<<<<<<< HEAD
             const TextField(
               obscureText: true,
               decoration: InputDecoration(
+=======
+            TextField(
+              obscureText: true,
+              decoration: const InputDecoration(
+>>>>>>> upstream/master
                 labelText: 'Password',
                 border: OutlineInputBorder(),
               ),
