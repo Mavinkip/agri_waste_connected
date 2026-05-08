@@ -143,3 +143,20 @@ MIT License
 ## ✅ Status
 
 Ready for UI styling and backend integration.
+
+## 🔔 PUSH NOTIFICATIONS
+
+### For Backend Developer:
+1. Enable FCM in Firebase Console: https://console.firebase.google.com/project/consolt-bd64e/notification
+2. Add Server Key to your backend
+3. Store farmer's FCM token from `users/{uid}/fcmToken`
+4. Send notifications via Firebase Admin SDK when:
+   - Driver assigned to listing
+   - Listing status changes
+   - Payment confirmed
+
+### For Farmer Developer (already done):
+- Notification permission request
+- FCM token generation
+- Foreground/background message handling
+- Notification tap handling
