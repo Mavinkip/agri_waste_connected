@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-<<<<<<< HEAD
-
-class RoutineEvaluationScreen extends StatelessWidget {
-  const RoutineEvaluationScreen({required this.collectionId, super.key});
-
-=======
 import '../../../../core/constants/app_strings.dart';
 
 class RoutineEvaluationScreen extends StatelessWidget {
   const RoutineEvaluationScreen({required this.collectionId, super.key});
-  
->>>>>>> upstream/master
+
   final String collectionId;
 
   @override
@@ -19,27 +12,29 @@ class RoutineEvaluationScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('RoutineEvaluationScreen'),
+        title: const Text('Routine Evaluation'),
         backgroundColor: AppColors.primaryGreen,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-<<<<<<< HEAD
-            const Text(
-              'RoutineEvaluationScreen - UI Coming Soon',
-              style: TextStyle(fontSize: 18),
-=======
             Text(
-              'RoutineEvaluationScreen - UI Coming Soon',
-              style: const TextStyle(fontSize: 18),
->>>>>>> upstream/master
+              'Routine Evaluation Screen',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Quality evaluation screen will be implemented here',
+              style: const TextStyle(fontSize: 16),
             ),
             if (collectionId.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text('ID: $collectionId'),
+                child: Text(
+                  'Collection ID: $collectionId',
+                  style: const TextStyle(fontSize: 14),
+                ),
               ),
           ],
         ),

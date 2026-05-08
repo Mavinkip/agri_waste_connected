@@ -681,8 +681,8 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.11.4",
+  "generatorVersion": "3.11.5",
   "flutterRoot": "file:///home/delva/flutter",
-  "flutterVersion": "3.41.6",
+  "flutterVersion": "3.41.9",
   "pubCache": "file:///home/delva/.pub-cache"
 }

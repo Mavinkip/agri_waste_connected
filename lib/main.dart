@@ -56,7 +56,14 @@ void main() async {
 
   await Injection.init();
   await LocalStorageService.init();
-  await ConnectivityService.init();
+
+  // Initialize Connectivity Service - FIXED
+  // Option 1: Access the singleton instance (it initializes itself)
+  final connectivity = ConnectivityService(); // This triggers initialization
+
+  // Option 2: If you need to wait for initial connection check
+  await connectivity.checkConnection();
+
   runApp(const MyApp());
 }
 
@@ -103,13 +110,13 @@ class MyApp extends StatelessWidget {
           '/driver/login': (context) => const DriverLoginScreen(),
           '/driver/route': (context) => const DriverRouteScreen(),
           '/driver/arrival': (context) =>
-              const ArrivalScreen(collectionId: 'test123'),
+          const ArrivalScreen(collectionId: 'test123'),
           '/driver/weigh': (context) =>
-              const WeighInScreen(collectionId: 'test123'),
+          const WeighInScreen(collectionId: 'test123'),
           '/driver/quality': (context) =>
-              const QualityCheckScreen(collectionId: 'test123'),
+          const QualityCheckScreen(collectionId: 'test123'),
           '/driver/payment': (context) =>
-              const PaymentConfirmationScreen(collectionId: 'test123'),
+          const PaymentConfirmationScreen(collectionId: 'test123'),
           '/driver/offline': (context) => const OfflineModeScreen(),
           '/admin/login': (context) => const AdminLoginScreen(),
           '/admin/dashboard': (context) => const AdminDashboardScreen(),
@@ -117,7 +124,7 @@ class MyApp extends StatelessWidget {
           '/admin/pricing': (context) => const PriceControllerScreen(),
           '/admin/inventory': (context) => const InventoryTrackerScreen(),
           '/admin/farmer': (context) =>
-              const FarmerProfileScreen(farmerId: 'farmer123'),
+          const FarmerProfileScreen(farmerId: 'farmer123'),
         },
       ),
     );

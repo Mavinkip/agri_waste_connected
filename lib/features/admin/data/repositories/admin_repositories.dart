@@ -1,15 +1,7 @@
-<<<<<<< HEAD
-import '../../../../shared/data/kenya_locations.dart';
-import '../models/location_models.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../../shared/models/user_model.dart';
-=======
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/models/waste_listing_model.dart';
->>>>>>> upstream/master
 
 class AdminRepository {
   final FirebaseFirestore _firestore;
@@ -39,14 +31,9 @@ class AdminRepository {
 
       return AdminDashboardStats(
         totalFarmers: farmers.size,
-<<<<<<< HEAD
-        activeDrivers:
-            drivers.docs.where((d) => d.data()['isAvailable'] == true).length,
-=======
         activeDrivers: drivers.docs
             .where((d) => d.data()['isAvailable'] == true)
             .length,
->>>>>>> upstream/master
         todayCollections: 0,
         pendingCollections: pending,
         totalWasteCollected: 0,
@@ -84,14 +71,9 @@ class AdminRepository {
 
   Future<List<DriverModel>> getAllDrivers({bool? isAvailable}) async {
     try {
-<<<<<<< HEAD
-      Query query =
-          _firestore.collection('users').where('role', isEqualTo: 'driver');
-=======
       Query query = _firestore
           .collection('users')
           .where('role', isEqualTo: 'driver');
->>>>>>> upstream/master
       if (isAvailable != null) {
         query = query.where('isAvailable', isEqualTo: isAvailable);
       }
@@ -117,12 +99,8 @@ class AdminRepository {
 
   Future<DriverModel?> getDriverDetails(String driverId) async {
     try {
-<<<<<<< HEAD
-      final doc = await _firestore.collection('users').doc(driverId).get();
-=======
       final doc =
-          await _firestore.collection('users').doc(driverId).get();
->>>>>>> upstream/master
+      await _firestore.collection('users').doc(driverId).get();
       if (!doc.exists) return null;
       final d = doc.data()!;
       return DriverModel(
@@ -154,11 +132,6 @@ class AdminRepository {
     }
   }
 
-<<<<<<< HEAD
-  Future<bool> assignCollection(String driverId, String collectionId) async {
-    try {
-      await _firestore.collection('listings').doc(collectionId).update({
-=======
   Future<bool> assignCollection(
       String driverId, String collectionId) async {
     try {
@@ -166,7 +139,6 @@ class AdminRepository {
           .collection('listings')
           .doc(collectionId)
           .update({
->>>>>>> upstream/master
         'driverId': driverId,
         'status': 'assigned',
         'assignedAt': FieldValue.serverTimestamp(),
@@ -214,26 +186,17 @@ class AdminRepository {
 
   Future<PricingConfig> getPricingConfig() async {
     try {
-<<<<<<< HEAD
-      final doc = await _firestore.collection('pricing').doc('config').get();
-=======
       final doc =
-          await _firestore.collection('pricing').doc('config').get();
->>>>>>> upstream/master
+      await _firestore.collection('pricing').doc('config').get();
       if (!doc.exists) return PricingConfig.empty();
       final data = doc.data()!;
       return PricingConfig(
         premiumThreshold: (data['premiumThreshold'] ?? 70).toDouble(),
         basePrices: Map<String, double>.from((data['basePrices'] as Map)
             .map((k, v) => MapEntry(k, (v as num).toDouble()))),
-<<<<<<< HEAD
-        premiumPrices: Map<String, double>.from((data['premiumPrices'] as Map)
-            .map((k, v) => MapEntry(k, (v as num).toDouble()))),
-=======
         premiumPrices: Map<String, double>.from(
             (data['premiumPrices'] as Map)
                 .map((k, v) => MapEntry(k, (v as num).toDouble()))),
->>>>>>> upstream/master
       );
     } catch (e) {
       return PricingConfig.empty();
@@ -314,7 +277,7 @@ class AdminRepository {
           weight: (d['actualQuantity'] ?? 0).toDouble(),
           farmerName: d['farmerName'] ?? '',
           collectedAt:
-              (d['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          (d['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
           status: d['status'] ?? 'completed',
         );
       }).toList();
@@ -325,12 +288,8 @@ class AdminRepository {
 
   Future<InventoryItem?> getInventoryItemDetails(String itemId) async {
     try {
-<<<<<<< HEAD
-      final doc = await _firestore.collection('listings').doc(itemId).get();
-=======
       final doc =
-          await _firestore.collection('listings').doc(itemId).get();
->>>>>>> upstream/master
+      await _firestore.collection('listings').doc(itemId).get();
       if (!doc.exists) return null;
       final d = doc.data()!;
       return InventoryItem(
@@ -339,7 +298,7 @@ class AdminRepository {
         weight: (d['actualQuantity'] ?? 0).toDouble(),
         farmerName: d['farmerName'] ?? '',
         collectedAt:
-            (d['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        (d['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         status: d['status'] ?? 'completed',
       );
     } catch (e) {
@@ -372,12 +331,8 @@ class AdminRepository {
 
   Future<RoutineRoute?> getRoutineDetails(String routineId) async {
     try {
-<<<<<<< HEAD
-      final doc = await _firestore.collection('routines').doc(routineId).get();
-=======
       final doc =
-          await _firestore.collection('routines').doc(routineId).get();
->>>>>>> upstream/master
+      await _firestore.collection('routines').doc(routineId).get();
       if (!doc.exists) return null;
       final d = doc.data()!;
       return RoutineRoute(
@@ -404,12 +359,8 @@ class AdminRepository {
     }
   }
 
-<<<<<<< HEAD
-  Future<bool> updateRoutine(String routineId, RoutineRoute routine) async {
-=======
   Future<bool> updateRoutine(
       String routineId, RoutineRoute routine) async {
->>>>>>> upstream/master
     try {
       await _firestore
           .collection('routines')
@@ -445,12 +396,8 @@ class AdminRepository {
 
   // ── FARMERS ──
 
-<<<<<<< HEAD
-  Future<List<UserModel>> getAllFarmers({int page = 1, String? search}) async {
-=======
   Future<List<UserModel>> getAllFarmers(
       {int page = 1, String? search}) async {
->>>>>>> upstream/master
     try {
       Query query = _firestore
           .collection('users')
@@ -459,17 +406,12 @@ class AdminRepository {
       final snap = await query.get();
       final farmers = snap.docs
           .map((doc) => UserModel.fromJson(
-              {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+          {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
           .toList();
       if (search != null && search.isNotEmpty) {
         return farmers
-<<<<<<< HEAD
-            .where(
-                (f) => f.fullName.toLowerCase().contains(search.toLowerCase()))
-=======
             .where((f) =>
-                f.fullName.toLowerCase().contains(search.toLowerCase()))
->>>>>>> upstream/master
+            f.fullName.toLowerCase().contains(search.toLowerCase()))
             .toList();
       }
       return farmers;
@@ -480,12 +422,8 @@ class AdminRepository {
 
   Future<UserModel?> getFarmerDetails(String farmerId) async {
     try {
-<<<<<<< HEAD
-      final doc = await _firestore.collection('users').doc(farmerId).get();
-=======
       final doc =
-          await _firestore.collection('users').doc(farmerId).get();
->>>>>>> upstream/master
+      await _firestore.collection('users').doc(farmerId).get();
       if (!doc.exists) return null;
       return UserModel.fromJson({...doc.data()!, 'id': doc.id});
     } catch (e) {
@@ -495,31 +433,19 @@ class AdminRepository {
 
   Future<FarmerAnalytics> getFarmerAnalytics(String farmerId) async {
     try {
-<<<<<<< HEAD
-      final userDoc = await _firestore.collection('users').doc(farmerId).get();
-=======
       final userDoc =
-          await _firestore.collection('users').doc(farmerId).get();
->>>>>>> upstream/master
+      await _firestore.collection('users').doc(farmerId).get();
       final listingsSnap = await _firestore
           .collection('listings')
           .where('farmerId', isEqualTo: farmerId)
           .get();
-<<<<<<< HEAD
-      final completed =
-          listingsSnap.docs.where((d) => d['status'] == 'completed').length;
-      final data = userDoc.data() ?? {};
-      return FarmerAnalytics(
-        consistencyScore: (data['consistencyScore'] ?? 0).toDouble(),
-=======
       final completed = listingsSnap.docs
           .where((d) => d['status'] == 'completed')
           .length;
       final data = userDoc.data() ?? {};
       return FarmerAnalytics(
         consistencyScore:
-            (data['consistencyScore'] ?? 0).toDouble(),
->>>>>>> upstream/master
+        (data['consistencyScore'] ?? 0).toDouble(),
         totalPickups: listingsSnap.size,
         completedPickups: completed,
         totalEarnings: (data['totalEarnings'] ?? 0).toDouble(),
@@ -550,76 +476,74 @@ class AdminRepository {
     required DateTime endDate,
   }) async {
     return ReportData(reportUrl: '', summary: {});
-<<<<<<< HEAD
-    // ─── LOCATION MANAGEMENT ───
+  }
 
-    Future<List<County>> getLocations() async {
-      try {
-        final snapshot = await _firestore
-            .collection('locations')
-            .doc('kenya_counties')
-            .get();
-        if (!snapshot.exists) {
-          return KenyaLocations.getDefaultCounties();
-        }
-        final data = snapshot.data()!;
-        return (data['counties'] as List)
-            .map((c) => County.fromJson(c))
-            .toList();
-      } catch (e) {
+  // ─── LOCATION MANAGEMENT ───
+
+  Future<List<County>> getLocations() async {
+    try {
+      final snapshot = await _firestore
+          .collection('locations')
+          .doc('kenya_counties')
+          .get();
+      if (!snapshot.exists) {
         return KenyaLocations.getDefaultCounties();
       }
+      final data = snapshot.data()!;
+      return (data['counties'] as List)
+          .map((c) => County.fromJson(c))
+          .toList();
+    } catch (e) {
+      return KenyaLocations.getDefaultCounties();
     }
+  }
 
-    Future<bool> saveLocations(List<County> counties) async {
-      try {
-        await _firestore.collection('locations').doc('kenya_counties').set({
-          'counties': counties.map((c) => c.toJson()).toList(),
-          'lastUpdated': DateTime.now().toIso8601String(),
-        });
-        return true;
-      } catch (e) {
-        return false;
-      }
+  Future<bool> saveLocations(List<County> counties) async {
+    try {
+      await _firestore.collection('locations').doc('kenya_counties').set({
+        'counties': counties.map((c) => c.toJson()).toList(),
+        'lastUpdated': DateTime.now().toIso8601String(),
+      });
+      return true;
+    } catch (e) {
+      return false;
     }
+  }
 
-    Future<List<CollectionSchedule>> getCollectionSchedules() async {
-      try {
-        final snapshot =
-            await _firestore.collection('collection_schedules').get();
-        return snapshot.docs
-            .map((doc) => CollectionSchedule.fromJson(doc.data()))
-            .toList();
-      } catch (e) {
-        return [];
-      }
+  Future<List<CollectionSchedule>> getCollectionSchedules() async {
+    try {
+      final snapshot =
+      await _firestore.collection('collection_schedules').get();
+      return snapshot.docs
+          .map((doc) => CollectionSchedule.fromJson(doc.data()))
+          .toList();
+    } catch (e) {
+      return [];
     }
+  }
 
-    Future<bool> saveCollectionSchedule(CollectionSchedule schedule) async {
-      try {
-        await _firestore
-            .collection('collection_schedules')
-            .doc(schedule.id)
-            .set(schedule.toJson());
-        return true;
-      } catch (e) {
-        return false;
-      }
+  Future<bool> saveCollectionSchedule(CollectionSchedule schedule) async {
+    try {
+      await _firestore
+          .collection('collection_schedules')
+          .doc(schedule.id)
+          .set(schedule.toJson());
+      return true;
+    } catch (e) {
+      return false;
     }
+  }
 
-    Future<bool> deleteCollectionSchedule(String scheduleId) async {
-      try {
-        await _firestore
-            .collection('collection_schedules')
-            .doc(scheduleId)
-            .delete();
-        return true;
-      } catch (e) {
-        return false;
-      }
+  Future<bool> deleteCollectionSchedule(String scheduleId) async {
+    try {
+      await _firestore
+          .collection('collection_schedules')
+          .doc(scheduleId)
+          .delete();
+      return true;
+    } catch (e) {
+      return false;
     }
-=======
->>>>>>> upstream/master
   }
 }
 
@@ -647,14 +571,14 @@ class AdminDashboardStats {
   });
 
   factory AdminDashboardStats.empty() => AdminDashboardStats(
-        totalFarmers: 0,
-        activeDrivers: 0,
-        todayCollections: 0,
-        pendingCollections: 0,
-        totalWasteCollected: 0,
-        totalRevenue: 0,
-        averageRating: 0,
-      );
+    totalFarmers: 0,
+    activeDrivers: 0,
+    todayCollections: 0,
+    pendingCollections: 0,
+    totalWasteCollected: 0,
+    totalRevenue: 0,
+    averageRating: 0,
+  );
 }
 
 class RevenueStats {
@@ -719,19 +643,14 @@ class PricingConfig {
     required this.premiumPrices,
   });
 
-<<<<<<< HEAD
-  factory PricingConfig.empty() =>
-      PricingConfig(premiumThreshold: 70, basePrices: {}, premiumPrices: {});
-=======
   factory PricingConfig.empty() => PricingConfig(
       premiumThreshold: 70, basePrices: {}, premiumPrices: {});
->>>>>>> upstream/master
 
   Map<String, dynamic> toJson() => {
-        'premiumThreshold': premiumThreshold,
-        'basePrices': basePrices,
-        'premiumPrices': premiumPrices,
-      };
+    'premiumThreshold': premiumThreshold,
+    'basePrices': basePrices,
+    'premiumPrices': premiumPrices,
+  };
 }
 
 class InventoryStats {
@@ -754,13 +673,9 @@ class InventoryStats {
 class InventoryAlert {
   final String wasteType, message, severity;
   InventoryAlert(
-<<<<<<< HEAD
-      {required this.wasteType, required this.message, required this.severity});
-=======
       {required this.wasteType,
-      required this.message,
-      required this.severity});
->>>>>>> upstream/master
+        required this.message,
+        required this.severity});
 }
 
 class InventoryItem {
@@ -795,14 +710,14 @@ class RoutineRoute {
   });
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'dayOfWeek': dayOfWeek,
-        'farmerIds': farmerIds,
-        'farmerNames': farmerNames,
-        'driverId': driverId,
-        'driverName': driverName,
-        'isActive': isActive,
-      };
+    'name': name,
+    'dayOfWeek': dayOfWeek,
+    'farmerIds': farmerIds,
+    'farmerNames': farmerNames,
+    'driverId': driverId,
+    'driverName': driverName,
+    'isActive': isActive,
+  };
 }
 
 class FarmerAnalytics {
@@ -820,13 +735,13 @@ class FarmerAnalytics {
   });
 
   factory FarmerAnalytics.empty() => FarmerAnalytics(
-        consistencyScore: 0,
-        totalPickups: 0,
-        completedPickups: 0,
-        totalEarnings: 0,
-        averageWeight: 0,
-        monthlyData: [],
-      );
+    consistencyScore: 0,
+    totalPickups: 0,
+    completedPickups: 0,
+    totalEarnings: 0,
+    averageWeight: 0,
+    monthlyData: [],
+  );
 }
 
 class MonthlyData {
@@ -835,13 +750,9 @@ class MonthlyData {
   final double earnings;
 
   MonthlyData(
-<<<<<<< HEAD
-      {required this.month, required this.pickups, required this.earnings});
-=======
       {required this.month,
-      required this.pickups,
-      required this.earnings});
->>>>>>> upstream/master
+        required this.pickups,
+        required this.earnings});
 }
 
 class ReportData {
@@ -850,10 +761,81 @@ class ReportData {
 
   ReportData({required this.reportUrl, required this.summary});
 
-<<<<<<< HEAD
-  factory ReportData.empty() => ReportData(reportUrl: '', summary: {});
-=======
   factory ReportData.empty() =>
       ReportData(reportUrl: '', summary: {});
->>>>>>> upstream/master
+}
+
+// Add these missing classes at the bottom
+class County {
+  final String name;
+  final List<String> subCounties;
+
+  County({required this.name, required this.subCounties});
+
+  factory County.fromJson(Map<String, dynamic> json) {
+    return County(
+      name: json['name'] as String,
+      subCounties: List<String>.from(json['subCounties'] as List),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'subCounties': subCounties,
+  };
+}
+
+class CollectionSchedule {
+  final String id;
+  final String county;
+  final String subCounty;
+  final String dayOfWeek;
+  final String timeSlot;
+  final bool isActive;
+
+  CollectionSchedule({
+    required this.id,
+    required this.county,
+    required this.subCounty,
+    required this.dayOfWeek,
+    required this.timeSlot,
+    required this.isActive,
+  });
+
+  factory CollectionSchedule.fromJson(Map<String, dynamic> json) {
+    return CollectionSchedule(
+      id: json['id'] as String,
+      county: json['county'] as String,
+      subCounty: json['subCounty'] as String,
+      dayOfWeek: json['dayOfWeek'] as String,
+      timeSlot: json['timeSlot'] as String,
+      isActive: json['isActive'] as bool,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'county': county,
+    'subCounty': subCounty,
+    'dayOfWeek': dayOfWeek,
+    'timeSlot': timeSlot,
+    'isActive': isActive,
+  };
+}
+
+// Add KenyaLocations class if not already defined elsewhere
+// Add KenyaLocations class if not already defined elsewhere
+class KenyaLocations {
+  static List<County> getDefaultCounties() {
+    return [
+      County(name: 'Nairobi', subCounties: ['Nairobi Central', 'Westlands', 'Kasarani']),
+      County(name: 'Kisumu', subCounties: ['Kisumu Central', 'Kisumu East', 'Kisumu West']),
+      County(name: 'Mombasa', subCounties: ['Mombasa Island', 'Nyali', 'Likoni']),
+      County(name: 'Kiambu', subCounties: ['Kiambu Town', 'Thika', 'Limuru', 'Githunguri']),
+      County(name: 'Nakuru', subCounties: ['Nakuru Town', 'Naivasha', 'Gilgil', 'Molo']),
+      County(name: 'Uasin Gishu', subCounties: ['Eldoret', 'Moiben', 'Soy', 'Turbo']),
+      County(name: 'Kakamega', subCounties: ['Kakamega Central', 'Lurambi', 'Malava', 'Mumias']),
+      // Add more counties as needed
+    ];
+  }
 }

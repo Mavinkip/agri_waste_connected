@@ -43,15 +43,11 @@ class CollectionRepository {
     }
   }
 
-<<<<<<< HEAD
-  Future<WasteListingModel?> getCollectionDetails(String collectionId) async {
-=======
   Future<WasteListingModel?> getCollectionDetails(
       String collectionId) async {
->>>>>>> upstream/master
     try {
       final doc =
-          await _firestore.collection('listings').doc(collectionId).get();
+      await _firestore.collection('listings').doc(collectionId).get();
       if (!doc.exists) return null;
       return WasteListingModel.fromJson({...doc.data()!, 'id': doc.id});
     } catch (e) {
@@ -124,28 +120,20 @@ class CollectionRepository {
     try {
       // Get listing to calculate payout
       final doc =
-          await _firestore.collection('listings').doc(collectionId).get();
+      await _firestore.collection('listings').doc(collectionId).get();
       final data = doc.data()!;
       final actualWeight =
-<<<<<<< HEAD
-          (data['actualQuantity'] ?? data['estimatedQuantity'] ?? 0).toDouble();
-=======
-          (data['actualQuantity'] ?? data['estimatedQuantity'] ?? 0)
-              .toDouble();
->>>>>>> upstream/master
+      (data['actualQuantity'] ?? data['estimatedQuantity'] ?? 0)
+          .toDouble();
       final wasteType = data['wasteType'] ?? 'cropResidue';
 
       // Get pricing
       final pricingDoc =
-          await _firestore.collection('pricing').doc('config').get();
+      await _firestore.collection('pricing').doc('config').get();
       final basePrices =
-          Map<String, dynamic>.from(pricingDoc.data()?['basePrices'] ?? {});
-<<<<<<< HEAD
-      final pricePerKg = (basePrices[wasteType] ?? 5).toDouble();
-=======
+      Map<String, dynamic>.from(pricingDoc.data()?['basePrices'] ?? {});
       final pricePerKg =
-          (basePrices[wasteType] ?? 5).toDouble();
->>>>>>> upstream/master
+      (basePrices[wasteType] ?? 5).toDouble();
       final finalPayout = actualWeight * pricePerKg;
 
       // Update listing as completed
@@ -165,23 +153,15 @@ class CollectionRepository {
         'quantity': actualWeight,
         'type': 'credit',
         'status': 'pending_mpesa',
-<<<<<<< HEAD
-        'description': 'Payment for $wasteType - ${actualWeight}kg',
-=======
         'description': 'Payment for ${wasteType} - ${actualWeight}kg',
->>>>>>> upstream/master
         'createdAt': FieldValue.serverTimestamp(),
       });
 
       // Update farmer total earnings
-<<<<<<< HEAD
-      await _firestore.collection('users').doc(data['farmerId']).update({
-=======
       await _firestore
           .collection('users')
           .doc(data['farmerId'])
           .update({
->>>>>>> upstream/master
         'totalEarnings': FieldValue.increment(finalPayout),
         'completedPickups': FieldValue.increment(1),
       });
@@ -200,7 +180,7 @@ class CollectionRepository {
   }) async {
     try {
       final doc =
-          await _firestore.collection('listings').doc(collectionId).get();
+      await _firestore.collection('listings').doc(collectionId).get();
       final farmerId = doc.data()?['farmerId'];
 
       await _firestore.collection('listings').doc(collectionId).update({
@@ -215,9 +195,9 @@ class CollectionRepository {
       // Update farmer consistency score
       if (farmerId != null) {
         final farmerDoc =
-            await _firestore.collection('users').doc(farmerId).get();
+        await _firestore.collection('users').doc(farmerId).get();
         final currentScore =
-            (farmerDoc.data()?['consistencyScore'] ?? 70).toDouble();
+        (farmerDoc.data()?['consistencyScore'] ?? 70).toDouble();
         final newScore = shouldContinue
             ? (currentScore + 2).clamp(0, 100).toDouble()
             : (currentScore - 5).clamp(0, 100).toDouble();
@@ -263,13 +243,8 @@ class CollectionRepository {
 
       return DriverDashboardStats(
         assignedCollections: allSnap.docs
-<<<<<<< HEAD
-            .where(
-                (d) => d['status'] == 'assigned' || d['status'] == 'inTransit')
-=======
             .where((d) =>
-                d['status'] == 'assigned' || d['status'] == 'inTransit')
->>>>>>> upstream/master
+        d['status'] == 'assigned' || d['status'] == 'inTransit')
             .length,
         completedToday: todayDocs.length,
         totalCompleted: completed,
@@ -303,13 +278,9 @@ class CollectionRepository {
           .collection('listings')
           .where('driverId', isEqualTo: _uid)
           .where('scheduledDate',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-<<<<<<< HEAD
-          .where('scheduledDate', isLessThan: Timestamp.fromDate(endOfDay))
-=======
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
           .where('scheduledDate',
-              isLessThan: Timestamp.fromDate(endOfDay))
->>>>>>> upstream/master
+          isLessThan: Timestamp.fromDate(endOfDay))
           .get();
 
       return snap.docs.map((doc) {
@@ -359,13 +330,13 @@ class DriverDashboardStats {
   });
 
   factory DriverDashboardStats.empty() => DriverDashboardStats(
-        assignedCollections: 0,
-        completedToday: 0,
-        totalCompleted: 0,
-        totalWasteCollected: 0,
-        averageRating: 0,
-        pendingEvaluations: 0,
-      );
+    assignedCollections: 0,
+    completedToday: 0,
+    totalCompleted: 0,
+    totalWasteCollected: 0,
+    averageRating: 0,
+    pendingEvaluations: 0,
+  );
 }
 
 class RoutineEvaluationResult {

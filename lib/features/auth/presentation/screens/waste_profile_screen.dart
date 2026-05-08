@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/app_colors.dart';
-<<<<<<< HEAD
-=======
 import '../../../../core/constants/app_strings.dart';
->>>>>>> upstream/master
 
 class WasteProfileScreen extends StatelessWidget {
   const WasteProfileScreen({super.key});

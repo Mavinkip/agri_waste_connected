@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-<<<<<<< HEAD
-
-class PaymentConfirmScreen extends StatelessWidget {
-  const PaymentConfirmScreen({required this.collectionId, super.key});
-
-=======
 import '../../../../core/constants/app_strings.dart';
 
 class PaymentConfirmScreen extends StatelessWidget {
   const PaymentConfirmScreen({required this.collectionId, super.key});
-  
->>>>>>> upstream/master
+
   final String collectionId;
 
   @override
@@ -19,27 +12,29 @@ class PaymentConfirmScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('PaymentConfirmScreen'),
+        title: const Text('Payment Confirmation'),
         backgroundColor: AppColors.primaryGreen,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-<<<<<<< HEAD
-            const Text(
-              'PaymentConfirmScreen - UI Coming Soon',
-              style: TextStyle(fontSize: 18),
-=======
             Text(
-              'PaymentConfirmScreen - UI Coming Soon',
-              style: const TextStyle(fontSize: 18),
->>>>>>> upstream/master
+              'Payment Confirmation',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Payment processing screen will be implemented here',
+              style: const TextStyle(fontSize: 16),
             ),
             if (collectionId.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text('ID: $collectionId'),
+                child: Text(
+                  'Collection ID: $collectionId',
+                  style: const TextStyle(fontSize: 14),
+                ),
               ),
           ],
         ),
