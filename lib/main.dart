@@ -43,6 +43,7 @@ import 'features/admin/presentation/screens/inventory_tracker_screen.dart';
 import 'features/admin/presentation/screens/farmer_profile_screen.dart';
 
 void main() async {
+  // Initialize notifications (mobile only - skips on web)
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
