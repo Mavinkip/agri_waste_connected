@@ -321,6 +321,9 @@ Create unstyled text-only UI screens following the UX documentation. No colors, 
 | `payment_confirmation_screen.dart` | `/driver/payment` | D6 - Success screen with receipt |
 | `offline_mode_screen.dart` | `/driver/offline` | D7 - No internet indicator |
 
+<<<<<<< HEAD
+#me doestn open and the whole machine becomes slow
+=======
 #### Admin Dashboard Screens (6 files)
 | Screen | Route | Documentation Reference |
 |--------|-------|------------------------|
@@ -400,6 +403,7 @@ lib/
     │               ├── photo_screen.dart ✅
     │               ├── confirm_location_screen.dart ✅
     │               └── success_screen.dart ✅
+>>>>>>> upstream/master
     ├── driver/
     │   ├── data/repositories/
     │   │   └── collection_repository.dart ✅

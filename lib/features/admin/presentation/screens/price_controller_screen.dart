@@ -52,15 +52,29 @@ class _PriceControllerScreenState extends State<PriceControllerScreen> {
             const Text('Bulk Update:'),
             Row(
               children: [
+<<<<<<< HEAD
+                const Expanded(
+                    child: TextField(
+                        decoration:
+                            InputDecoration(labelText: 'Price per kg'))),
+=======
                 const Expanded(child: TextField(decoration: InputDecoration(labelText: 'Price per kg'))),
+>>>>>>> upstream/master
                 ElevatedButton(onPressed: () {}, child: const Text('APPLY')),
               ],
             ),
             const SizedBox(height: 16),
+<<<<<<< HEAD
+            const Row(
+              children: [
+                Checkbox(value: true, onChanged: null),
+                Text('Notify all farmers when prices change'),
+=======
             Row(
               children: [
                 Checkbox(value: true, onChanged: null),
                 const Text('Notify all farmers when prices change'),
+>>>>>>> upstream/master
               ],
             ),
             const SizedBox(height: 16),

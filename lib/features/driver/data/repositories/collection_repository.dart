@@ -43,8 +43,12 @@ class CollectionRepository {
     }
   }
 
+<<<<<<< HEAD
+  Future<WasteListingModel?> getCollectionDetails(String collectionId) async {
+=======
   Future<WasteListingModel?> getCollectionDetails(
       String collectionId) async {
+>>>>>>> upstream/master
     try {
       final doc =
           await _firestore.collection('listings').doc(collectionId).get();
@@ -123,8 +127,12 @@ class CollectionRepository {
           await _firestore.collection('listings').doc(collectionId).get();
       final data = doc.data()!;
       final actualWeight =
+<<<<<<< HEAD
+          (data['actualQuantity'] ?? data['estimatedQuantity'] ?? 0).toDouble();
+=======
           (data['actualQuantity'] ?? data['estimatedQuantity'] ?? 0)
               .toDouble();
+>>>>>>> upstream/master
       final wasteType = data['wasteType'] ?? 'cropResidue';
 
       // Get pricing
@@ -132,8 +140,12 @@ class CollectionRepository {
           await _firestore.collection('pricing').doc('config').get();
       final basePrices =
           Map<String, dynamic>.from(pricingDoc.data()?['basePrices'] ?? {});
+<<<<<<< HEAD
+      final pricePerKg = (basePrices[wasteType] ?? 5).toDouble();
+=======
       final pricePerKg =
           (basePrices[wasteType] ?? 5).toDouble();
+>>>>>>> upstream/master
       final finalPayout = actualWeight * pricePerKg;
 
       // Update listing as completed
@@ -153,15 +165,23 @@ class CollectionRepository {
         'quantity': actualWeight,
         'type': 'credit',
         'status': 'pending_mpesa',
+<<<<<<< HEAD
+        'description': 'Payment for $wasteType - ${actualWeight}kg',
+=======
         'description': 'Payment for ${wasteType} - ${actualWeight}kg',
+>>>>>>> upstream/master
         'createdAt': FieldValue.serverTimestamp(),
       });
 
       // Update farmer total earnings
+<<<<<<< HEAD
+      await _firestore.collection('users').doc(data['farmerId']).update({
+=======
       await _firestore
           .collection('users')
           .doc(data['farmerId'])
           .update({
+>>>>>>> upstream/master
         'totalEarnings': FieldValue.increment(finalPayout),
         'completedPickups': FieldValue.increment(1),
       });
@@ -243,8 +263,13 @@ class CollectionRepository {
 
       return DriverDashboardStats(
         assignedCollections: allSnap.docs
+<<<<<<< HEAD
+            .where(
+                (d) => d['status'] == 'assigned' || d['status'] == 'inTransit')
+=======
             .where((d) =>
                 d['status'] == 'assigned' || d['status'] == 'inTransit')
+>>>>>>> upstream/master
             .length,
         completedToday: todayDocs.length,
         totalCompleted: completed,
@@ -279,8 +304,12 @@ class CollectionRepository {
           .where('driverId', isEqualTo: _uid)
           .where('scheduledDate',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+<<<<<<< HEAD
+          .where('scheduledDate', isLessThan: Timestamp.fromDate(endOfDay))
+=======
           .where('scheduledDate',
               isLessThan: Timestamp.fromDate(endOfDay))
+>>>>>>> upstream/master
           .get();
 
       return snap.docs.map((doc) {

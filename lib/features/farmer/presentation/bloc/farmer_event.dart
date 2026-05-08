@@ -8,7 +8,9 @@ abstract class FarmerEvent extends Equatable {
 }
 
 // Profile Events
-class LoadFarmerProfile extends FarmerEvent {}
+class LoadFarmerProfile extends FarmerEvent {
+  const LoadFarmerProfile();
+}
 
 class UpdateFarmerProfile extends FarmerEvent {
   final Map<String, dynamic> updates;
@@ -35,29 +37,44 @@ class UpdateFarmLocation extends FarmerEvent {
 }
 
 // Dashboard Events
-class LoadDashboardStats extends FarmerEvent {}
+class LoadDashboardStats extends FarmerEvent {
+  const LoadDashboardStats();
+}
 
-class LoadConsistencyScore extends FarmerEvent {}
+class LoadConsistencyScore extends FarmerEvent {
+  const LoadConsistencyScore();
+}
 
 // Earnings Events
-class LoadEarningsSummary extends FarmerEvent {}
+class LoadEarningsSummary extends FarmerEvent {
+  const LoadEarningsSummary();
+}
 
 class LoadEarningsHistory extends FarmerEvent {
   final int page;
   final int limit;
 
-  const LoadEarningsHistory({this.page = 1, this.limit = 20});
+  const LoadEarningsHistory({
+    this.page = 1,
+    this.limit = 20,
+  });
 
   @override
   List<Object?> get props => [page, limit];
 }
 
-class LoadMoreEarnings extends FarmerEvent {}
+class LoadMoreEarnings extends FarmerEvent {
+  const LoadMoreEarnings();
+}
 
-class RefreshEarnings extends FarmerEvent {}
+class RefreshEarnings extends FarmerEvent {
+  const RefreshEarnings();
+}
 
 // Schedule Events
-class LoadRoutineSchedule extends FarmerEvent {}
+class LoadRoutineSchedule extends FarmerEvent {
+  const LoadRoutineSchedule();
+}
 
 class UpdateRoutineSchedule extends FarmerEvent {
   final bool isActive;
@@ -75,7 +92,9 @@ class UpdateRoutineSchedule extends FarmerEvent {
 }
 
 // Pricing Events
-class LoadPricingInfo extends FarmerEvent {}
+class LoadPricingInfo extends FarmerEvent {
+  const LoadPricingInfo();
+}
 
 // Notification Events
 class LoadNotifications extends FarmerEvent {
@@ -96,7 +115,11 @@ class MarkNotificationRead extends FarmerEvent {
   List<Object?> get props => [notificationId];
 }
 
-class MarkAllNotificationsRead extends FarmerEvent {}
+class MarkAllNotificationsRead extends FarmerEvent {
+  const MarkAllNotificationsRead();
+}
 
 // Refresh Events
-class RefreshFarmerData extends FarmerEvent {}
+class RefreshFarmerData extends FarmerEvent {
+  const RefreshFarmerData();
+}

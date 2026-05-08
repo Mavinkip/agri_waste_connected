@@ -16,7 +16,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     // Dashboard Events
     on<LoadDashboardStats>(_onLoadDashboardStats);
     on<LoadRevenueStats>(_onLoadRevenueStats);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     // Fleet Events
     on<LoadAllDrivers>(_onLoadAllDrivers);
     on<LoadDriverDetails>(_onLoadDriverDetails);
@@ -24,18 +28,30 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<AssignCollection>(_onAssignCollection);
     on<LoadAllVehicles>(_onLoadAllVehicles);
     on<AddVehicle>(_onAddVehicle);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     // Pricing Events
     on<LoadPricingConfig>(_onLoadPricingConfig);
     on<UpdatePricingConfig>(_onUpdatePricingConfig);
     on<UpdateWasteTypePrice>(_onUpdateWasteTypePrice);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     // Inventory Events
     on<LoadInventoryStats>(_onLoadInventoryStats);
     on<LoadInventoryItems>(_onLoadInventoryItems);
     on<LoadInventoryItemDetails>(_onLoadInventoryItemDetails);
     on<LoadMoreInventoryItems>(_onLoadMoreInventoryItems);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     // Routine Events
     on<LoadAllRoutines>(_onLoadAllRoutines);
     on<LoadRoutineDetails>(_onLoadRoutineDetails);
@@ -43,17 +59,28 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<UpdateRoutine>(_onUpdateRoutine);
     on<DeleteRoutine>(_onDeleteRoutine);
     on<OptimizeRoutine>(_onOptimizeRoutine);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     // Farmer Events
     on<LoadAllFarmers>(_onLoadAllFarmers);
     on<LoadFarmerDetails>(_onLoadFarmerDetails);
     on<LoadFarmerAnalytics>(_onLoadFarmerAnalytics);
     on<UpdateFarmerStatus>(_onUpdateFarmerStatus);
     on<LoadMoreFarmers>(_onLoadMoreFarmers);
+<<<<<<< HEAD
+
+    // Report Events
+    on<GenerateReport>(_onGenerateReport);
+
+=======
     
     // Report Events
     on<GenerateReport>(_onGenerateReport);
     
+>>>>>>> upstream/master
     // Refresh Event
     on<RefreshAdminData>(_onRefreshAdminData);
   }
@@ -82,7 +109,12 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     Emitter<AdminState> emit,
   ) async {
     emit(DriversLoading());
+<<<<<<< HEAD
+    final drivers =
+        await _adminRepository.getAllDrivers(isAvailable: event.isAvailable);
+=======
     final drivers = await _adminRepository.getAllDrivers(isAvailable: event.isAvailable);
+>>>>>>> upstream/master
     emit(DriversLoaded(drivers: drivers));
   }
 
@@ -108,14 +140,22 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       event.driverId,
       isActive: event.isActive,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(DriverStatusUpdated(
         driverId: event.driverId,
         isActive: event.isActive,
         message: 'Driver status updated successfully',
       ));
+<<<<<<< HEAD
+      add(const LoadAllDrivers()); // Refresh list
+=======
       add(LoadAllDrivers()); // Refresh list
+>>>>>>> upstream/master
     } else {
       emit(const AdminError('Failed to update driver status'));
     }
@@ -130,7 +170,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       event.driverId,
       event.collectionId,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(CollectionAssigned(
         driverId: event.driverId,
@@ -157,7 +201,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   ) async {
     emit(AdminLoading());
     final success = await _adminRepository.addVehicle(event.vehicleData);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(const VehicleAdded('Vehicle added successfully'));
       add(LoadAllVehicles()); // Refresh list
@@ -182,7 +230,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   ) async {
     emit(AdminLoading());
     final success = await _adminRepository.updatePricingConfig(event.config);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(const PricingConfigUpdated('Pricing configuration updated'));
       add(LoadPricingConfig()); // Refresh
@@ -201,7 +253,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       event.basePrice,
       event.premiumPrice,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(WasteTypePriceUpdated(
         wasteType: event.wasteType,
@@ -232,12 +288,20 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     if (event.page == 1) {
       emit(InventoryLoading());
     }
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     final items = await _adminRepository.getInventoryItems(
       wasteType: event.wasteType,
       page: event.page,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (state is InventoryItemsLoaded && event.page > 1) {
       final currentState = state as InventoryItemsLoaded;
       final allItems = [...currentState.items, ...items];
@@ -309,7 +373,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   ) async {
     emit(AdminLoading());
     final success = await _adminRepository.createRoutine(event.routine);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(const RoutineCreated('Routine created successfully'));
       add(LoadAllRoutines()); // Refresh list
@@ -327,7 +395,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       event.routineId,
       event.routine,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(const RoutineUpdated('Routine updated successfully'));
       add(LoadAllRoutines()); // Refresh list
@@ -342,7 +414,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   ) async {
     emit(AdminLoading());
     final success = await _adminRepository.deleteRoutine(event.routineId);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(const RoutineDeleted('Routine deleted successfully'));
       add(LoadAllRoutines()); // Refresh list
@@ -357,7 +433,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   ) async {
     emit(AdminLoading());
     final success = await _adminRepository.optimizeRoutine(event.routineId);
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(const RoutineOptimized('Routine optimized successfully'));
       add(LoadRoutineDetails(event.routineId)); // Refresh details
@@ -374,12 +454,20 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     if (event.page == 1) {
       emit(FarmersLoading());
     }
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     final farmers = await _adminRepository.getAllFarmers(
       page: event.page,
       search: event.search,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (state is FarmersLoaded && event.page > 1) {
       final currentState = state as FarmersLoaded;
       final allFarmers = [...currentState.farmers, ...farmers];
@@ -428,14 +516,22 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       event.farmerId,
       isActive: event.isActive,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(FarmerStatusUpdated(
         farmerId: event.farmerId,
         isActive: event.isActive,
         message: 'Farmer status updated successfully',
       ));
+<<<<<<< HEAD
+      add(const LoadAllFarmers()); // Refresh list
+=======
       add(LoadAllFarmers()); // Refresh list
+>>>>>>> upstream/master
     } else {
       emit(const AdminError('Failed to update farmer status'));
     }
@@ -473,10 +569,18 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     Emitter<AdminState> emit,
   ) async {
     add(LoadDashboardStats());
+<<<<<<< HEAD
+    add(const LoadRevenueStats());
+    add(const LoadAllDrivers());
+    add(LoadInventoryStats());
+    add(LoadAllRoutines());
+    add(const LoadAllFarmers());
+=======
     add(LoadRevenueStats());
     add(LoadAllDrivers());
     add(LoadInventoryStats());
     add(LoadAllRoutines());
     add(LoadAllFarmers());
+>>>>>>> upstream/master
   }
 }

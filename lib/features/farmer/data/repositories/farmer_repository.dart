@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/models/user_model.dart';
-import '../../../../shared/models/waste_listing_model.dart';
 
 class FarmerRepository {
   final FirebaseFirestore _firestore;
@@ -173,15 +172,14 @@ class FarmerRepository {
 
   Future<PricingInfo> getPricingInfo() async {
     try {
-      final doc =
-          await _firestore.collection('pricing').doc('config').get();
+      final doc = await _firestore.collection('pricing').doc('config').get();
       if (!doc.exists) return PricingInfo.empty();
       final data = doc.data()!;
       return PricingInfo(
-        basePrices: Map<String, double>.from(
-            (data['basePrices'] as Map).map((k, v) => MapEntry(k, (v as num).toDouble()))),
-        premiumPrices: Map<String, double>.from(
-            (data['premiumPrices'] as Map).map((k, v) => MapEntry(k, (v as num).toDouble()))),
+        basePrices: Map<String, double>.from((data['basePrices'] as Map)
+            .map((k, v) => MapEntry(k, (v as num).toDouble()))),
+        premiumPrices: Map<String, double>.from((data['premiumPrices'] as Map)
+            .map((k, v) => MapEntry(k, (v as num).toDouble()))),
         premiumThreshold: (data['premiumThreshold'] ?? 70).toDouble(),
       );
     } catch (e) {

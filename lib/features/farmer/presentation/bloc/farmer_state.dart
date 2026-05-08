@@ -7,19 +7,12 @@ abstract class FarmerState extends Equatable {
   List<Object?> get props => [];
 }
 
-// Initial State
 class FarmerInitial extends FarmerState {}
 
-// Loading States
 class FarmerLoading extends FarmerState {}
 
 class FarmerProfileLoading extends FarmerState {}
 
-class FarmerEarningsLoading extends FarmerState {}
-
-class FarmerScheduleLoading extends FarmerState {}
-
-// Profile States
 class FarmerProfileLoaded extends FarmerState {
   final UserModel profile;
 
@@ -39,7 +32,8 @@ class FarmerProfileUpdateSuccess extends FarmerState {
   List<Object?> get props => [profile, message];
 }
 
-// Dashboard States
+class FarmerDashboardLoading extends FarmerState {}
+
 class FarmerDashboardLoaded extends FarmerState {
   final FarmerDashboardStats stats;
 
@@ -49,16 +43,8 @@ class FarmerDashboardLoaded extends FarmerState {
   List<Object?> get props => [stats];
 }
 
-class ConsistencyScoreLoaded extends FarmerState {
-  final double score;
+class FarmerEarningsLoading extends FarmerState {}
 
-  const ConsistencyScoreLoaded(this.score);
-
-  @override
-  List<Object?> get props => [score];
-}
-
-// Earnings States
 class FarmerEarningsLoaded extends FarmerState {
   final EarningsSummary summary;
   final List<EarningTransaction> transactions;
@@ -89,7 +75,8 @@ class FarmerEarningsLoadingMore extends FarmerState {
   List<Object?> get props => [summary, existingTransactions];
 }
 
-// Schedule States
+class FarmerScheduleLoading extends FarmerState {}
+
 class FarmerScheduleLoaded extends FarmerState {
   final List<RoutineSchedule> schedules;
 
@@ -108,7 +95,15 @@ class FarmerScheduleUpdateSuccess extends FarmerState {
   List<Object?> get props => [message];
 }
 
-// Pricing States
+class ConsistencyScoreLoaded extends FarmerState {
+  final double score;
+
+  const ConsistencyScoreLoaded(this.score);
+
+  @override
+  List<Object?> get props => [score];
+}
+
 class PricingInfoLoaded extends FarmerState {
   final PricingInfo pricingInfo;
 
@@ -118,7 +113,6 @@ class PricingInfoLoaded extends FarmerState {
   List<Object?> get props => [pricingInfo];
 }
 
-// Notification States
 class NotificationsLoaded extends FarmerState {
   final List<FarmerNotification> notifications;
   final int unreadCount;
@@ -141,7 +135,6 @@ class NotificationMarkedRead extends FarmerState {
   List<Object?> get props => [notificationId];
 }
 
-// Error States
 class FarmerError extends FarmerState {
   final String message;
 
@@ -151,7 +144,6 @@ class FarmerError extends FarmerState {
   List<Object?> get props => [message];
 }
 
-// Success States (without data)
 class FarmerSuccess extends FarmerState {
   final String message;
 

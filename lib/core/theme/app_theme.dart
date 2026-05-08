@@ -96,7 +96,11 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: AppColors.white,
       elevation: 2,
+<<<<<<< HEAD
+      shadowColor: Colors.black.withValues(alpha: 0.05),
+=======
       shadowColor: Colors.black.withOpacity(0.05),
+>>>>>>> upstream/master
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.all(8),
     ),

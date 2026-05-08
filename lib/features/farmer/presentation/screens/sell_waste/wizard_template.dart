@@ -1,22 +1,27 @@
+// lib/features/farmer/presentation/screens/sell_waste/wizard_template.dart
 import 'package:flutter/material.dart';
-import '../../../../../../core/constants/app_colors.dart';
-import '../../../../../../core/constants/app_strings.dart';
-import '../../../../../../core/services/navigation_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/sell_wizard_cubit.dart';
+import '../../../../../core/constants/app_colors.dart';
 
 class WizardTemplate extends StatelessWidget {
   final String title;
   final String description;
   final Widget content;
-  final int currentStep;
-  final int totalSteps;
-  
+  final VoidCallback? onNext;
+  final bool canProceed;
+  final bool isLastStep;
+  final bool isSubmitting;
+
   const WizardTemplate({
     super.key,
     required this.title,
     required this.description,
     required this.content,
-    required this.currentStep,
-    required this.totalSteps,
+    this.onNext,
+    this.canProceed = true,
+    this.isLastStep = false,
+    this.isSubmitting = false,
   });
 
   @override
@@ -25,64 +30,86 @@ class WizardTemplate extends StatelessWidget {
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(title),
-        backgroundColor: AppColors.primaryGreen,
-        foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            if (currentStep > 0) {
-              NavigationService.pop();
-            } else {
-              NavigationService.pushReplacement('/farmer/home');
-            }
+            context.read<SellWizardCubit>().previousStep();
           },
         ),
       ),
       body: Column(
         children: [
-          LinearProgressIndicator(
-            value: (currentStep + 1) / totalSteps,
-            backgroundColor: Colors.grey.shade200,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+          // Progress Indicator
+          BlocBuilder<SellWizardCubit, SellWizardState>(
+            builder: (context, state) {
+              return LinearProgressIndicator(
+                value: (state.currentStep + 1) / 4,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primaryGreen,
+                ),
+              );
+            },
           ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Title
                   Text(
                     title,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.black,
                     ),
                   ),
                   const SizedBox(height: 8),
+
+                  // Description
                   Text(
                     description,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.darkGray,
                     ),
                   ),
                   const SizedBox(height: 32),
-                  Expanded(child: content),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (currentStep + 1 < totalSteps) {
-                        // Navigate to next step
-                      } else {
-                        NavigationService.pushReplacement('/farmer/sell/success');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: Text(
-                      currentStep + 1 == totalSteps ? AppStrings.submit : AppStrings.next,
+
+                  // Content
+                  content,
+                  const SizedBox(height: 24),
+
+                  // Next/Submit Button
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: (canProceed && !isSubmitting) ? onNext : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        disabledBackgroundColor: Colors.grey.shade300,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: isSubmitting
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              isLastStep ? 'Submit Listing' : 'Continue',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ],

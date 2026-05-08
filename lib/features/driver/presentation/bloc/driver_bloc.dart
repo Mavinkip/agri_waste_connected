@@ -66,9 +66,16 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(CollectionDetailsLoading());
+<<<<<<< HEAD
+
+    final collection =
+        await _collectionRepository.getCollectionDetails(event.collectionId);
+
+=======
     
     final collection = await _collectionRepository.getCollectionDetails(event.collectionId);
     
+>>>>>>> upstream/master
     if (collection != null) {
       emit(CollectionDetailsLoaded(collection));
     } else {
@@ -82,12 +89,20 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(DriverLoading());
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     final success = await _collectionRepository.markArrival(
       event.collectionId,
       notes: event.notes,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(ArrivalMarked(event.collectionId, 'Arrival marked successfully'));
       // Refresh collection details
@@ -103,13 +118,21 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(DriverLoading());
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     final success = await _collectionRepository.recordWeight(
       collectionId: event.collectionId,
       actualWeight: event.actualWeight,
       notes: event.notes,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(WeightRecorded(
         event.collectionId,
@@ -128,14 +151,22 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(DriverLoading());
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     final success = await _collectionRepository.submitQualityCheck(
       collectionId: event.collectionId,
       rating: event.rating,
       qualityNotes: event.qualityNotes,
       photoUrls: event.photoUrls,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (success) {
       emit(QualitySubmitted(
         event.collectionId,
@@ -154,11 +185,21 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(DriverLoading());
+<<<<<<< HEAD
+
+    final success =
+        await _collectionRepository.confirmPayment(event.collectionId);
+
+    if (success) {
+      emit(PaymentConfirmed(
+          event.collectionId, 'Payment confirmed successfully'));
+=======
     
     final success = await _collectionRepository.confirmPayment(event.collectionId);
     
     if (success) {
       emit(PaymentConfirmed(event.collectionId, 'Payment confirmed successfully'));
+>>>>>>> upstream/master
       add(LoadCollectionDetails(event.collectionId));
     } else {
       emit(const DriverError('Failed to confirm payment'));
@@ -171,12 +212,23 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(DriverLoading());
+<<<<<<< HEAD
+
+    final success =
+        await _collectionRepository.completeCollection(event.collectionId);
+
+    if (success) {
+      emit(CollectionCompleted(
+          event.collectionId, 'Collection completed successfully'));
+      add(const LoadAssignedCollections()); // Refresh the list
+=======
     
     final success = await _collectionRepository.completeCollection(event.collectionId);
     
     if (success) {
       emit(CollectionCompleted(event.collectionId, 'Collection completed successfully'));
       add(LoadAssignedCollections()); // Refresh the list
+>>>>>>> upstream/master
     } else {
       emit(const DriverError('Failed to complete collection'));
     }
@@ -188,14 +240,22 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(DriverLoading());
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     final result = await _collectionRepository.evaluateRoutine(
       collectionId: event.collectionId,
       qualityRating: event.qualityRating,
       shouldContinue: event.shouldContinue,
       notes: event.notes,
     );
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> upstream/master
     if (result.success) {
       emit(RoutineEvaluated(
         collectionId: event.collectionId,
@@ -233,9 +293,16 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(DriverLoading());
+<<<<<<< HEAD
+
+    final success =
+        await _collectionRepository.updateAvailability(event.isAvailable);
+
+=======
     
     final success = await _collectionRepository.updateAvailability(event.isAvailable);
     
+>>>>>>> upstream/master
     if (success) {
       emit(AvailabilityUpdated(
         event.isAvailable,
@@ -252,9 +319,15 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
     Emitter<DriverState> emit,
   ) async {
     emit(DriverLoading());
+<<<<<<< HEAD
+
+    await _collectionRepository.syncOfflineCollections();
+
+=======
     
     await _collectionRepository.syncOfflineCollections();
     
+>>>>>>> upstream/master
     emit(const OfflineSyncCompleted(0, 'Offline data synced successfully'));
     add(RefreshDriverData());
   }
@@ -266,6 +339,10 @@ class DriverBloc extends Bloc<DriverEvent, DriverState> {
   ) async {
     add(LoadDriverDashboard());
     add(LoadTodaySchedule());
+<<<<<<< HEAD
+    add(const LoadAssignedCollections());
+=======
     add(LoadAssignedCollections());
+>>>>>>> upstream/master
   }
 }

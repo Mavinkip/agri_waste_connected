@@ -1,6 +1,8 @@
 import 'dart:async';
-import 'package:bloc/bloc.dart';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+
 import '../../../../shared/models/user_model.dart';
 import '../../data/repositories/farmer_repository.dart';
 import '../../data/repositories/listing_repository.dart';
@@ -18,25 +20,31 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     required FarmerRepository farmerRepository,
     required ListingRepository listingRepository,
     required WalletRepository walletRepository,
-  }) : _farmerRepository = farmerRepository,
-       _listingRepository = listingRepository,
-       _walletRepository = walletRepository,
-       super(FarmerInitial()) {
+  })  : _farmerRepository = farmerRepository,
+        _listingRepository = listingRepository,
+        _walletRepository = walletRepository,
+        super(FarmerInitial()) {
     on<LoadFarmerProfile>(_onLoadFarmerProfile);
     on<UpdateFarmerProfile>(_onUpdateFarmerProfile);
     on<UpdateFarmLocation>(_onUpdateFarmLocation);
+
     on<LoadDashboardStats>(_onLoadDashboardStats);
     on<LoadConsistencyScore>(_onLoadConsistencyScore);
+
     on<LoadEarningsSummary>(_onLoadEarningsSummary);
     on<LoadEarningsHistory>(_onLoadEarningsHistory);
     on<LoadMoreEarnings>(_onLoadMoreEarnings);
     on<RefreshEarnings>(_onRefreshEarnings);
+
     on<LoadRoutineSchedule>(_onLoadRoutineSchedule);
     on<UpdateRoutineSchedule>(_onUpdateRoutineSchedule);
+
     on<LoadPricingInfo>(_onLoadPricingInfo);
+
     on<LoadNotifications>(_onLoadNotifications);
     on<MarkNotificationRead>(_onMarkNotificationRead);
     on<MarkAllNotificationsRead>(_onMarkAllNotificationsRead);
+
     on<RefreshFarmerData>(_onRefreshFarmerData);
   }
 
@@ -46,9 +54,9 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     Emitter<FarmerState> emit,
   ) async {
     emit(FarmerProfileLoading());
-    
+
     final profile = await _farmerRepository.getFarmerProfile();
-    
+
     if (profile != null) {
       emit(FarmerProfileLoaded(profile));
     } else {
@@ -61,12 +69,17 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     Emitter<FarmerState> emit,
   ) async {
     emit(FarmerLoading());
-    
+
     try {
-      final updatedProfile = await _farmerRepository.updateFarmerProfile(event.updates);
-      
+      final updatedProfile = await _farmerRepository.updateFarmerProfile(
+        event.updates,
+      );
+
       if (updatedProfile != null) {
-        emit(FarmerProfileUpdateSuccess(updatedProfile, 'Profile updated successfully'));
+        emit(FarmerProfileUpdateSuccess(
+          updatedProfile,
+          'Profile updated successfully',
+        ));
       } else {
         emit(const FarmerError('Failed to update profile'));
       }
@@ -80,16 +93,16 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     Emitter<FarmerState> emit,
   ) async {
     emit(FarmerLoading());
-    
+
     final success = await _farmerRepository.updateFarmLocation(
       latitude: event.latitude,
       longitude: event.longitude,
       address: event.address,
     );
-    
+
     if (success) {
       emit(const FarmerSuccess('Farm location updated successfully'));
-      add(LoadFarmerProfile()); // Reload profile
+      add(const LoadFarmerProfile()); // Reload profile
     } else {
       emit(const FarmerError('Failed to update farm location'));
     }
@@ -118,9 +131,11 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     Emitter<FarmerState> emit,
   ) async {
     final summary = await _farmerRepository.getEarningsSummary();
-    // We'll combine with transactions in the earnings loaded state
-    final transactions = await _farmerRepository.getEarningsHistory(page: 1, limit: 20);
-    
+    final transactions = await _farmerRepository.getEarningsHistory(
+      page: 1,
+      limit: 20,
+    );
+
     emit(FarmerEarningsLoaded(
       summary: summary,
       transactions: transactions,
@@ -135,17 +150,22 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
   ) async {
     if (state is FarmerEarningsLoaded) {
       final currentState = state as FarmerEarningsLoaded;
+
       emit(FarmerEarningsLoadingMore(
         summary: currentState.summary,
         existingTransactions: currentState.transactions,
       ));
-      
+
       final newTransactions = await _farmerRepository.getEarningsHistory(
         page: event.page,
         limit: event.limit,
       );
-      
-      final allTransactions = [...currentState.transactions, ...newTransactions];
+
+      final allTransactions = [
+        ...currentState.transactions,
+        ...newTransactions,
+      ];
+
       emit(FarmerEarningsLoaded(
         summary: currentState.summary,
         transactions: allTransactions,
@@ -158,7 +178,7 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
         page: event.page,
         limit: event.limit,
       );
-      
+
       emit(FarmerEarningsLoaded(
         summary: summary,
         transactions: transactions,
@@ -174,8 +194,13 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
   ) async {
     if (state is FarmerEarningsLoaded) {
       final currentState = state as FarmerEarningsLoaded;
+
       if (currentState.hasMore) {
-        add(LoadEarningsHistory(page: currentState.currentPage + 1));
+        add(
+          LoadEarningsHistory(
+            page: currentState.currentPage + 1,
+          ),
+        );
       }
     }
   }
@@ -184,7 +209,7 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     RefreshEarnings event,
     Emitter<FarmerState> emit,
   ) async {
-    add(LoadEarningsSummary());
+    add(const LoadEarningsSummary());
   }
 
   // Schedule Events
@@ -193,7 +218,7 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     Emitter<FarmerState> emit,
   ) async {
     emit(FarmerScheduleLoading());
-    
+
     final schedules = await _farmerRepository.getRoutineSchedule();
     emit(FarmerScheduleLoaded(schedules));
   }
@@ -203,16 +228,18 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     Emitter<FarmerState> emit,
   ) async {
     emit(FarmerLoading());
-    
+
     final success = await _farmerRepository.updateRoutineSchedule(
       isActive: event.isActive,
       preferredDay: event.preferredDay,
       preferredTimeSlot: event.preferredTimeSlot,
     );
-    
+
     if (success) {
-      emit(FarmerScheduleUpdateSuccess('Schedule updated successfully'));
-      add(LoadRoutineSchedule()); // Reload schedule
+      emit(const FarmerScheduleUpdateSuccess(
+        'Schedule updated successfully',
+      ));
+      add(const LoadRoutineSchedule()); // Reload schedule
     } else {
       emit(const FarmerError('Failed to update schedule'));
     }
@@ -236,7 +263,7 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
       unreadOnly: event.unreadOnly,
     );
     final unreadCount = notifications.where((n) => !n.isRead).length;
-    
+
     emit(NotificationsLoaded(
       notifications: notifications,
       unreadCount: unreadCount,
@@ -247,11 +274,13 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     MarkNotificationRead event,
     Emitter<FarmerState> emit,
   ) async {
-    final success = await _farmerRepository.markNotificationRead(event.notificationId);
-    
+    final success = await _farmerRepository.markNotificationRead(
+      event.notificationId,
+    );
+
     if (success) {
       emit(NotificationMarkedRead(event.notificationId));
-      add(LoadNotifications()); // Refresh notifications
+      add(const LoadNotifications());
     }
   }
 
@@ -259,10 +288,8 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     MarkAllNotificationsRead event,
     Emitter<FarmerState> emit,
   ) async {
-    // Implementation for marking all as read
-    // This would need a bulk API endpoint
     emit(const FarmerSuccess('All notifications marked as read'));
-    add(LoadNotifications());
+    add(const LoadNotifications());
   }
 
   // Refresh All Data
@@ -270,12 +297,12 @@ class FarmerBloc extends Bloc<FarmerEvent, FarmerState> {
     RefreshFarmerData event,
     Emitter<FarmerState> emit,
   ) async {
-    add(LoadFarmerProfile());
-    add(LoadDashboardStats());
-    add(LoadConsistencyScore());
-    add(LoadEarningsSummary());
-    add(LoadRoutineSchedule());
-    add(LoadPricingInfo());
-    add(LoadNotifications());
+    add(const LoadFarmerProfile());
+    add(const LoadDashboardStats());
+    add(const LoadConsistencyScore());
+    add(const LoadEarningsSummary());
+    add(const LoadRoutineSchedule());
+    add(const LoadPricingInfo());
+    add(const LoadNotifications());
   }
 }
