@@ -41,29 +41,50 @@ import 'features/admin/presentation/screens/fleet_management_screen.dart';
 import 'features/admin/presentation/screens/price_controller_screen.dart';
 import 'features/admin/presentation/screens/inventory_tracker_screen.dart';
 import 'features/admin/presentation/screens/farmer_profile_screen.dart';
+import 'features/auth/presentation/screens/register_driver_screen.dart';
+
+import 'features/admin/presentation/screens/community_management_screen.dart';
+import 'features/admin/presentation/screens/community_detail_screen.dart';
+import 'features/admin/presentation/screens/companies_screen.dart';
 
 void main() async {
-  // Initialize notifications (mobile only - skips on web)
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase already initialized: $e');
+  }
 
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-  );
+  try {
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+  } catch (e) {
+    debugPrint('Firestore settings error: $e');
+  }
 
-  await Injection.init();
-  await LocalStorageService.init();
+  try {
+    await Injection.init();
+  } catch (e) {
+    debugPrint('Injection init error: $e');
+  }
 
-  // Initialize Connectivity Service - FIXED
-  // Option 1: Access the singleton instance (it initializes itself)
-  final connectivity = ConnectivityService(); // This triggers initialization
+  try {
+    await LocalStorageService.init();
+  } catch (e) {
+    debugPrint('LocalStorage init error: $e');
+  }
 
-  // Option 2: If you need to wait for initial connection check
-  await connectivity.checkConnection();
+  try {
+    final connectivity = ConnectivityService();
+    await connectivity.checkConnection();
+  } catch (e) {
+    debugPrint('Connectivity init error: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -108,6 +129,7 @@ class MyApp extends StatelessWidget {
           '/farmer/sell/success': (context) => const SuccessScreen(),
           '/farmer/earnings': (context) => const EarningsHistoryScreen(),
           '/farmer/schedule': (context) => const ScheduleScreen(),
+          '/register-driver': (context) => const RegisterDriverScreen(),
           '/driver/login': (context) => const DriverLoginScreen(),
           '/driver/route': (context) => const DriverRouteScreen(),
           '/driver/arrival': (context) =>
@@ -124,7 +146,10 @@ class MyApp extends StatelessWidget {
           '/admin/fleet': (context) => const FleetManagementScreen(),
           '/admin/pricing': (context) => const PriceControllerScreen(),
           '/admin/inventory': (context) => const InventoryTrackerScreen(),
+          '/admin/communities': (context) => const CommunityManagementScreen(),
+          '/admin/companies': (context) => const CompaniesScreen(),
           '/admin/farmer': (context) =>
+
           const FarmerProfileScreen(farmerId: 'farmer123'),
         },
       ),

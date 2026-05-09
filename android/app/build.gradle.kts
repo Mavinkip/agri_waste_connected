@@ -9,8 +9,7 @@ plugins {
 android {
     namespace = "com.example.agri_waste_connected"
     compileSdk = 36  // Using fixed version for stability
-    ndkVersion = "27.0.12077973"
-
+    ndkVersion = "28.2.13676358"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

@@ -53,16 +53,20 @@ class AdminDashboardScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 TextButton(
+                  onPressed: () => NavigationService.go('/admin/communities'),
+                  child: const Text('Communities'),
+                ),
+                TextButton(
+                  onPressed: () => NavigationService.go('/admin/companies'),
+                  child: const Text('Companies'),
+                ),
+                TextButton(
                   onPressed: () => NavigationService.go('/admin/inventory'),
                   child: const Text('Inventory'),
                 ),
                 TextButton(
                   onPressed: () => NavigationService.go('/admin/fleet'),
                   child: const Text('Fleet'),
-                ),
-                TextButton(
-                  onPressed: () => NavigationService.go('/admin/pricing'),
-                  child: const Text('Pricing'),
                 ),
               ],
             ),
