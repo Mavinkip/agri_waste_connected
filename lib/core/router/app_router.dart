@@ -28,6 +28,14 @@ import '../../features/admin/presentation/screens/farmer_profile_screen.dart';
 import '../../shared/models/user_model.dart';
 import '../di/injection.dart';
 
+// Role constants to replace the enum
+class UserRoles {
+  static const String farmer = 'farmer';
+  static const String driver = 'driver';
+  static const String admin = 'admin';
+  static const String company = 'company';
+}
+
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/splash',
@@ -37,37 +45,43 @@ class AppRouter {
       if (state.matchedLocation == '/splash') {
         return null;
       }
-      
+
       // Check if AuthBloc is registered
       if (!sl.isRegistered<AuthBloc>()) {
         return null;
       }
-      
+
       final authBloc = sl<AuthBloc>();
-      final isAuthenticated = authBloc.state is AuthAuthenticated;
-      final isLogin = state.matchedLocation == '/login';
-      final isRegister = state.matchedLocation == '/register';
-      
+
+      // Check if authenticated
+      final bool isAuthenticated = authBloc.state is AuthAuthenticated;
+      final bool isLogin = state.matchedLocation == '/login';
+      final bool isRegister = state.matchedLocation == '/register';
+
       // If not authenticated and not on auth screens, redirect to login
       if (!isAuthenticated && !isLogin && !isRegister) {
         return '/login';
       }
-      
+
       // If authenticated and on auth screens, redirect based on role
       if (isAuthenticated && (isLogin || isRegister)) {
         final authState = authBloc.state as AuthAuthenticated;
-        final role = authState.user.role;
-        
+        final String role = authState.user.role; // role is String now
+
         switch (role) {
-          case UserRole.farmer:
+          case UserRoles.farmer:
             return '/farmer/home';
-          case UserRole.driver:
+          case UserRoles.driver:
             return '/driver/home';
-          case UserRole.admin:
+          case UserRoles.admin:
             return '/admin/dashboard';
+          case UserRoles.company:
+            return '/company/dashboard';
+          default:
+            return '/farmer/home';
         }
       }
-      
+
       return null;
     },
     routes: [
@@ -97,7 +111,7 @@ class AppRouter {
         name: 'waste-profile',
         builder: (context, state) => const WasteProfileScreen(),
       ),
-      
+
       // Farmer Routes
       GoRoute(
         path: '/farmer/home',
@@ -114,7 +128,7 @@ class AppRouter {
         name: 'farmer-schedule',
         builder: (context, state) => const ScheduleScreen(),
       ),
-      
+
       // Farmer Sell Wizard Routes
       GoRoute(
         path: '/farmer/sell/waste-type',
@@ -141,7 +155,7 @@ class AppRouter {
         name: 'sell-success',
         builder: (context, state) => const SuccessScreen(),
       ),
-      
+
       // Driver Routes
       GoRoute(
         path: '/driver/home',
@@ -188,7 +202,7 @@ class AppRouter {
           return PaymentConfirmScreen(collectionId: collectionId);
         },
       ),
-      
+
       // Admin Routes
       GoRoute(
         path: '/admin/dashboard',
@@ -221,6 +235,18 @@ class AppRouter {
         builder: (context, state) {
           final farmerId = state.pathParameters['farmerId']!;
           return FarmerProfileScreen(farmerId: farmerId);
+        },
+      ),
+
+      // Company Routes (if they exist)
+      GoRoute(
+        path: '/company/dashboard',
+        name: 'company-dashboard',
+        builder: (context, state) {
+          // Import your company dashboard screen
+          // return const CompanyDashboardScreen();
+          // For now, redirect to farmer home as placeholder
+          return const FarmerHomeScreen();
         },
       ),
     ],

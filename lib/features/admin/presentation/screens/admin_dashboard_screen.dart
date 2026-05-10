@@ -1,3 +1,4 @@
+import 'admin_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -177,7 +178,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdminShell(child: Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
@@ -253,6 +254,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -450,12 +452,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildQuickActions() {
+    // In admin_dashboard_screen.dart, update quick actions:
     final actions = [
       ('Farmers', Icons.people, Colors.green, _showFarmersDetail),
       ('Drivers', Icons.local_shipping, Colors.blue, _showDriversDetail),
       ('Communities', Icons.people_alt, Colors.orange, _showCommunitiesDetail),
-      ('Companies', Icons.business, Colors.purple, _showCompaniesDetail),
-      ('Pickups', Icons.pending_actions, Colors.red, _showPickupsDetail),
+      ('Companies', Icons.business, Colors.purple, () {
+        NavigationService.push('/admin/companies');
+      }),
+      ('Pickups', Icons.pending_actions, Colors.red, () {
+        NavigationService.push('/admin/pickups');
+      }),
       ('Reports', Icons.analytics, Colors.brown, _showReportsDetail),
     ];
 

@@ -82,8 +82,8 @@ class AdminRepository {
         final d = doc.data() as Map<String, dynamic>;
         return DriverModel(
           id: doc.id,
-          fullName: d['fullName'] ?? '',
-          phoneNumber: d['phoneNumber'] ?? '',
+          fullName: d['name'] ?? d['fullName'] ?? '', // Changed to use 'name'
+          phoneNumber: d['phone'] ?? d['phoneNumber'] ?? '', // Changed to use 'phone'
           vehicleNumber: d['vehicleNumber'] ?? '',
           vehicleType: d['vehicleType'] ?? '',
           isAvailable: d['isAvailable'] ?? false,
@@ -105,8 +105,8 @@ class AdminRepository {
       final d = doc.data()!;
       return DriverModel(
         id: doc.id,
-        fullName: d['fullName'] ?? '',
-        phoneNumber: d['phoneNumber'] ?? '',
+        fullName: d['name'] ?? d['fullName'] ?? '', // Changed to use 'name'
+        phoneNumber: d['phone'] ?? d['phoneNumber'] ?? '', // Changed to use 'phone'
         vehicleNumber: d['vehicleNumber'] ?? '',
         vehicleType: d['vehicleType'] ?? '',
         isAvailable: d['isAvailable'] ?? false,
@@ -383,8 +383,6 @@ class AdminRepository {
 
   Future<bool> optimizeRoutine(String routineId) async {
     try {
-      // Placeholder: real implementation would reorder farmerIds by geo-proximity.
-      // For now just touch the document so the BLoC gets a success response.
       await _firestore.collection('routines').doc(routineId).update({
         'lastOptimizedAt': FieldValue.serverTimestamp(),
       });
@@ -395,7 +393,7 @@ class AdminRepository {
   }
 
   // ── FARMERS ──
-
+  // FIXED: Use fromMap instead of fromJson, use 'name' instead of 'fullName'
   Future<List<UserModel>> getAllFarmers(
       {int page = 1, String? search}) async {
     try {
@@ -405,13 +403,11 @@ class AdminRepository {
           .limit(20);
       final snap = await query.get();
       final farmers = snap.docs
-          .map((doc) => UserModel.fromJson(
-          {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+          .map((doc) => UserModel.fromMap(doc.id, doc.data() as Map<String, dynamic>))
           .toList();
       if (search != null && search.isNotEmpty) {
         return farmers
-            .where((f) =>
-            f.fullName.toLowerCase().contains(search.toLowerCase()))
+            .where((f) => f.name.toLowerCase().contains(search.toLowerCase())) // Changed to 'name'
             .toList();
       }
       return farmers;
@@ -420,12 +416,13 @@ class AdminRepository {
     }
   }
 
+  // FIXED: Use fromMap instead of fromJson
   Future<UserModel?> getFarmerDetails(String farmerId) async {
     try {
       final doc =
       await _firestore.collection('users').doc(farmerId).get();
       if (!doc.exists) return null;
-      return UserModel.fromJson({...doc.data()!, 'id': doc.id});
+      return UserModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
     } catch (e) {
       return null;
     }
@@ -548,7 +545,7 @@ class AdminRepository {
 }
 
 // ══════════════════════════════════════════════════════════════
-// MODEL CLASSES
+// MODEL CLASSES (keep these as they are)
 // ══════════════════════════════════════════════════════════════
 
 class AdminDashboardStats {
@@ -765,7 +762,6 @@ class ReportData {
       ReportData(reportUrl: '', summary: {});
 }
 
-// Add these missing classes at the bottom
 class County {
   final String name;
   final List<String> subCounties;
@@ -823,8 +819,6 @@ class CollectionSchedule {
   };
 }
 
-// Add KenyaLocations class if not already defined elsewhere
-// Add KenyaLocations class if not already defined elsewhere
 class KenyaLocations {
   static List<County> getDefaultCounties() {
     return [
@@ -835,7 +829,6 @@ class KenyaLocations {
       County(name: 'Nakuru', subCounties: ['Nakuru Town', 'Naivasha', 'Gilgil', 'Molo']),
       County(name: 'Uasin Gishu', subCounties: ['Eldoret', 'Moiben', 'Soy', 'Turbo']),
       County(name: 'Kakamega', subCounties: ['Kakamega Central', 'Lurambi', 'Malava', 'Mumias']),
-      // Add more counties as needed
     ];
   }
 }

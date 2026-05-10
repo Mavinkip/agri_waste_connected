@@ -24,7 +24,7 @@ class AuthRegisterRequested extends AuthEvent {
   final String fullName;
   final String phoneNumber;
   final String password;
-  final UserRole role;
+  final String role; // Changed from UserRole to String
 
   const AuthRegisterRequested({
     required this.fullName,

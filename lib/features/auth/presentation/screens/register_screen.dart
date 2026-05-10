@@ -25,7 +25,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // Region selection
   String? _selectedCounty;
   String? _selectedSubCounty;
+  String? _selectedWard;
   List<String> _availableSubCounties = [];
+  List<String> _availableWards = [];
   List<String> _counties = [];
 
   @override
@@ -35,14 +37,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _loadCounties() {
-    // Use the same method as the working screens
-    _counties = KenyaLocations.getCountyNames();
+    setState(() {
+      _counties = KenyaLocations.getCountyNames();
+      print('Loaded counties: $_counties'); // Debug print
+    });
   }
 
   void _loadSubCounties(String county) {
+    print('Loading sub-counties for: $county'); // Debug print
+    final subCounties = KenyaLocations.getSubCountyNames(county);
+    print('Found sub-counties: $subCounties'); // Debug print
+
     setState(() {
-      _availableSubCounties = KenyaLocations.getSubCountyNames(county);
+      _availableSubCounties = subCounties;
+      _selectedSubCounty = null;
+      _selectedWard = null;
+      _availableWards = [];
     });
+
+    if (_availableSubCounties.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No sub-counties found for $county'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  void _loadWards(String county, String subCounty) {
+    print('Loading wards for: $county - $subCounty'); // Debug print
+    final wards = KenyaLocations.getWardNames(county, subCounty);
+    print('Found wards: $wards'); // Debug print
+
+    setState(() {
+      _availableWards = wards;
+      _selectedWard = null;
+    });
+
+    if (_availableWards.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No wards found for $subCounty'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
   @override
@@ -77,6 +117,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (_selectedWard == null) {
+      setState(() => _error = 'Please select your ward');
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
@@ -87,13 +132,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final email = '$phone@agri.local';
       final name = _nameController.text.trim();
 
+      print('Registering user: $name, $phone, $email'); // Debug print
+
       // Create Firebase Auth user
       final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: _passwordController.text,
       );
 
-      // Store user data in Firestore with region info
+      print('User created: ${credential.user!.uid}'); // Debug print
+
+      // Store user data in Firestore with region info including ward
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
@@ -103,12 +152,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'role': 'farmer',
         'county': _selectedCounty,
         'subCounty': _selectedSubCounty,
+        'ward': _selectedWard,
         'createdAt': FieldValue.serverTimestamp(),
         'isActive': true,
         'totalEarnings': 0,
         'completedPickups': 0,
         'consistencyScore': 70,
       });
+
+      print('User data saved to Firestore'); // Debug print
 
       if (mounted) {
         // Show success message
@@ -129,6 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         NavigationService.pop();
       }
     } on FirebaseAuthException catch (e) {
+      print('FirebaseAuthException: ${e.code} - ${e.message}'); // Debug print
       String msg;
       switch (e.code) {
         case 'email-already-in-use':
@@ -141,15 +194,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           msg = 'No internet connection. Check your network.';
           break;
         default:
-          msg = 'Registration failed. Please try again.';
+          msg = 'Registration failed: ${e.message}';
       }
       setState(() {
         _error = msg;
         _loading = false;
       });
     } catch (e) {
+      print('General error: $e'); // Debug print
       setState(() {
-        _error = 'Something went wrong. Please try again.';
+        _error = 'Something went wrong: $e';
         _loading = false;
       });
     }
@@ -234,12 +288,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   );
                 }).toList(),
                 onChanged: (value) {
-                  setState(() {
-                    _selectedCounty = value;
-                    _selectedSubCounty = null;
-                    _availableSubCounties = [];
-                  });
                   if (value != null) {
+                    setState(() {
+                      _selectedCounty = value;
+                    });
                     _loadSubCounties(value);
                   }
                 },
@@ -247,7 +299,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Sub-County Selection (only visible after county is selected)
+              // Sub-County Selection
               if (_selectedCounty != null)
                 DropdownButtonFormField<String>(
                   value: _selectedSubCounty,
@@ -263,11 +315,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     );
                   }).toList(),
                   onChanged: (value) {
-                    setState(() {
-                      _selectedSubCounty = value;
-                    });
+                    if (value != null) {
+                      setState(() {
+                        _selectedSubCounty = value;
+                      });
+                      _loadWards(_selectedCounty!, value);
+                    }
                   },
                   validator: (v) => v == null ? 'Please select your sub-county' : null,
+                ),
+              const SizedBox(height: 14),
+
+              // Ward Selection
+              if (_selectedSubCounty != null)
+                DropdownButtonFormField<String>(
+                  value: _selectedWard,
+                  decoration: const InputDecoration(
+                    labelText: 'Ward',
+                    prefixIcon: Icon(Icons.place),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _availableWards.map((ward) {
+                    return DropdownMenuItem(
+                      value: ward,
+                      child: Text(ward),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedWard = value;
+                    });
+                  },
+                  validator: (v) => v == null ? 'Please select your ward' : null,
                 ),
               const SizedBox(height: 14),
 

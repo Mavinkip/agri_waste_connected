@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'features/admin/presentation/screens/company_management_screen.dart';
+import 'features/admin/presentation/screens/pickup_management_screen.dart';
+import 'features/company/presentation/screens/company_dashboard_screen.dart';
 import 'firebase_options.dart';
 import 'core/services/navigation_service.dart';
 import 'core/di/injection.dart';
@@ -25,6 +28,7 @@ import 'features/farmer/presentation/screens/sell_waste/confirm_location_screen.
 import 'features/farmer/presentation/screens/sell_waste/success_screen.dart';
 import 'features/farmer/presentation/screens/earnings_history_screen.dart';
 import 'features/farmer/presentation/screens/schedule_screen.dart';
+import 'features/farmer/presentation/screens/join_community_screen.dart';
 import 'features/farmer/presentation/bloc/farmer_bloc.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/farmer/presentation/bloc/sell_wizard_cubit.dart';
@@ -129,6 +133,7 @@ class MyApp extends StatelessWidget {
           '/farmer/sell/success': (context) => const SuccessScreen(),
           '/farmer/earnings': (context) => const EarningsHistoryScreen(),
           '/farmer/schedule': (context) => const ScheduleScreen(),
+          '/farmer/communities': (context) => const JoinCommunityScreen(),
           '/register-driver': (context) => const RegisterDriverScreen(),
           '/driver/login': (context) => const DriverLoginScreen(),
           '/driver/route': (context) => const DriverRouteScreen(),
@@ -148,6 +153,10 @@ class MyApp extends StatelessWidget {
           '/admin/inventory': (context) => const InventoryTrackerScreen(),
           '/admin/communities': (context) => const CommunityManagementScreen(),
           '/admin/companies': (context) => const CompaniesScreen(),
+          // Add these routes:
+          '/admin/companies': (context) => const CompanyManagementScreen(),
+          '/company/dashboard': (context) => const CompanyDashboardScreen(),
+          '/admin/pickups': (context) => const PickupManagementScreen(),
           '/admin/farmer': (context) =>
 
           const FarmerProfileScreen(farmerId: 'farmer123'),
