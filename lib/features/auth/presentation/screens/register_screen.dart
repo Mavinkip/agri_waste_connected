@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../../core/services/navigation_service.dart';
+import '../../../../shared/data/kenya_locations.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,6 +21,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _loading = false;
   String? _error;
   bool _termsAccepted = false;
+
+  // Region selection
+  String? _selectedCounty;
+  String? _selectedSubCounty;
+  List<String> _availableSubCounties = [];
+  List<String> _counties = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCounties();
+  }
+
+  void _loadCounties() {
+    // Use the same method as the working screens
+    _counties = KenyaLocations.getCountyNames();
+  }
+
+  void _loadSubCounties(String county) {
+    setState(() {
+      _availableSubCounties = KenyaLocations.getSubCountyNames(county);
+    });
+  }
 
   @override
   void dispose() {
@@ -42,6 +66,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // Validate region selection
+    if (_selectedCounty == null) {
+      setState(() => _error = 'Please select your county');
+      return;
+    }
+
+    if (_selectedSubCounty == null) {
+      setState(() => _error = 'Please select your sub-county');
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
@@ -58,7 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passwordController.text,
       );
 
-      // Store user data in Firestore
+      // Store user data in Firestore with region info
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
@@ -66,7 +101,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'fullName': name,
         'phoneNumber': phone,
         'role': 'farmer',
+        'county': _selectedCounty,
+        'subCounty': _selectedSubCounty,
         'createdAt': FieldValue.serverTimestamp(),
+        'isActive': true,
+        'totalEarnings': 0,
+        'completedPickups': 0,
+        'consistencyScore': 70,
       });
 
       if (mounted) {
@@ -176,6 +217,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 14),
+
+              // County Selection
+              DropdownButtonFormField<String>(
+                value: _selectedCounty,
+                decoration: const InputDecoration(
+                  labelText: 'County',
+                  prefixIcon: Icon(Icons.location_city),
+                  border: OutlineInputBorder(),
+                ),
+                items: _counties.map((county) {
+                  return DropdownMenuItem(
+                    value: county,
+                    child: Text(county),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCounty = value;
+                    _selectedSubCounty = null;
+                    _availableSubCounties = [];
+                  });
+                  if (value != null) {
+                    _loadSubCounties(value);
+                  }
+                },
+                validator: (v) => v == null ? 'Please select your county' : null,
+              ),
+              const SizedBox(height: 14),
+
+              // Sub-County Selection (only visible after county is selected)
+              if (_selectedCounty != null)
+                DropdownButtonFormField<String>(
+                  value: _selectedSubCounty,
+                  decoration: const InputDecoration(
+                    labelText: 'Sub-County',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _availableSubCounties.map((subCounty) {
+                    return DropdownMenuItem(
+                      value: subCounty,
+                      child: Text(subCounty),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSubCounty = value;
+                    });
+                  },
+                  validator: (v) => v == null ? 'Please select your sub-county' : null,
+                ),
               const SizedBox(height: 14),
 
               // Password Field
