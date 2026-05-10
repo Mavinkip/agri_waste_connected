@@ -34,7 +34,8 @@ class AuthRepository {
         return AuthResponse.failure(message: 'User profile not found');
       }
 
-      final user = UserModel.fromJson({...doc.data()!, 'id': doc.id});
+      // Fix: Use fromMap instead of fromJson
+      final user = UserModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
       final token = await credential.user!.getIdToken() ?? '';
 
       await _saveUserLocally(user);
@@ -54,11 +55,16 @@ class AuthRepository {
         password: data.password,
       );
 
+      // Fix: Use the fields that match your UserModel
       final userDoc = {
-        'phoneNumber': data.phoneNumber,
-        'fullName': data.fullName,
-        'role': data.role.name,
-        'isVerified': false,
+        'name': data.fullName,        // Changed from fullName to name
+        'phone': data.phoneNumber,    // Changed from phoneNumber to phone
+        'role': data.role,            // role is already a String in your model
+        'county': '',                  // Default empty
+        'subCounty': '',               // Default empty
+        'communityIds': [],            // Empty array
+        'totalEarnings': 0,            // Default 0
+        'consistencyScore': 0,         // Default 0
         'createdAt': FieldValue.serverTimestamp(),
       };
 
@@ -67,12 +73,19 @@ class AuthRepository {
           .doc(credential.user!.uid)
           .set(userDoc);
 
+      // Fix: Create UserModel with your model's constructor
       final user = UserModel(
-        id: credential.user!.uid,
-        phoneNumber: data.phoneNumber,
-        fullName: data.fullName,
+        uid: credential.user!.uid,
+        name: data.fullName,
+        phone: data.phoneNumber,
         role: data.role,
-        createdAt: DateTime.now(),
+        county: '',
+        subCounty: '',
+        communityIds: [],
+        latitude: null,
+        longitude: null,
+        totalEarnings: 0,
+        consistencyScore: 0,
       );
 
       final token = await credential.user!.getIdToken() ?? '';
@@ -103,13 +116,16 @@ class AuthRepository {
           .doc(firebaseUser.uid)
           .get();
       if (!doc.exists) return null;
-      return UserModel.fromJson({...doc.data()!, 'id': doc.id});
+      // Fix: Use fromMap instead of fromJson
+      return UserModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
     } catch (e) {
       // Try local cache
       final prefs = await SharedPreferences.getInstance();
       final userData = prefs.getString('user_data');
       if (userData != null) {
-        return UserModel.fromJson(jsonDecode(userData));
+        final Map<String, dynamic> jsonMap = jsonDecode(userData);
+        // Fix: Create UserModel from stored map
+        return UserModel.fromMap(jsonMap['uid'], jsonMap);
       }
       return null;
     }
@@ -121,7 +137,8 @@ class AuthRepository {
 
   Future<void> _saveUserLocally(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_data', jsonEncode(user.toJson()));
+    // Fix: Use toMap() instead of toJson()
+    await prefs.setString('user_data', jsonEncode(user.toMap()));
   }
 
   Future<bool> verifyPhoneNumber(String phoneNumber) async {
@@ -139,7 +156,7 @@ class RegisterData {
   final String fullName;
   final String phoneNumber;
   final String password;
-  final UserRole role;
+  final String role; // Changed from UserRole enum to String
 
   RegisterData({
     required this.fullName,

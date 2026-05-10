@@ -18,7 +18,8 @@ class FarmerRepository {
     try {
       final doc = await _firestore.collection('users').doc(_uid).get();
       if (!doc.exists) return null;
-      return UserModel.fromJson({...doc.data()!, 'id': doc.id});
+      // Fix: Use fromMap instead of fromJson
+      return UserModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
     } catch (e) {
       return null;
     }
@@ -77,8 +78,8 @@ class FarmerRepository {
   }) async {
     try {
       await _firestore.collection('users').doc(_uid).update({
-        'farmLocationLat': latitude,
-        'farmLocationLng': longitude,
+        'latitude': double.tryParse(latitude), // Changed to match UserModel
+        'longitude': double.tryParse(longitude), // Changed to match UserModel
         'farmAddress': address,
       });
       return true;
@@ -228,7 +229,7 @@ class FarmerRepository {
   }
 }
 
-// ── Model classes ──
+// ── Model classes (keep as is, they work fine) ──
 
 class FarmerDashboardStats {
   final double totalEarnings;
@@ -258,13 +259,13 @@ class FarmerDashboardStats {
       );
 
   factory FarmerDashboardStats.empty() => FarmerDashboardStats(
-        totalEarnings: 0,
-        completedSales: 0,
-        activeListings: 0,
-        consistencyScore: 0,
-        totalPickups: 0,
-        averageRating: 0,
-      );
+    totalEarnings: 0,
+    completedSales: 0,
+    activeListings: 0,
+    consistencyScore: 0,
+    totalPickups: 0,
+    averageRating: 0,
+  );
 }
 
 class EarningsSummary {
@@ -292,12 +293,12 @@ class EarningsSummary {
       );
 
   factory EarningsSummary.empty() => EarningsSummary(
-        totalEarned: 0,
-        pendingPayment: 0,
-        thisMonth: 0,
-        lastMonth: 0,
-        lifetimeEarnings: 0,
-      );
+    totalEarned: 0,
+    pendingPayment: 0,
+    thisMonth: 0,
+    lastMonth: 0,
+    lifetimeEarnings: 0,
+  );
 }
 
 class EarningTransaction {
@@ -373,16 +374,16 @@ class PricingInfo {
   });
 
   factory PricingInfo.fromJson(Map<String, dynamic> json) => PricingInfo(
-        basePrices: Map<String, double>.from(json['base_prices']),
-        premiumPrices: Map<String, double>.from(json['premium_prices']),
-        premiumThreshold: (json['premium_threshold'] ?? 70).toDouble(),
-      );
+    basePrices: Map<String, double>.from(json['base_prices']),
+    premiumPrices: Map<String, double>.from(json['premium_prices']),
+    premiumThreshold: (json['premium_threshold'] ?? 70).toDouble(),
+  );
 
   factory PricingInfo.empty() => PricingInfo(
-        basePrices: {},
-        premiumPrices: {},
-        premiumThreshold: 70,
-      );
+    basePrices: {},
+    premiumPrices: {},
+    premiumThreshold: 70,
+  );
 
   double getPriceForWasteType(String wasteType, double consistencyScore) {
     final basePrice = basePrices[wasteType] ?? 0;

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../shared/models/community_model.dart';
@@ -17,6 +18,19 @@ class _CommunityManagementScreenState
     extends State<CommunityManagementScreen> {
   final _firestore = FirebaseFirestore.instance;
 
+  final List<String> _wasteTypes = [
+    'cropResidue',
+    'livestockManure',
+    'fruitWaste',
+    'coffeeHusks',
+    'vegetableWaste',
+    'sugarcaneBagasse',
+    'mixedOrganic',
+    'riceHusks',
+    'coconutWaste',
+    'maizeStover',
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,6 +38,7 @@ class _CommunityManagementScreenState
       appBar: AppBar(
         title: const Text('Community Management'),
         backgroundColor: AppColors.primaryGreen,
+        foregroundColor: Colors.white,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateDialog,
@@ -58,14 +73,14 @@ class _CommunityManagementScreenState
             padding: const EdgeInsets.all(16),
             itemCount: docs.length,
             itemBuilder: (ctx, i) {
-              final data =
-              docs[i].data() as Map<String, dynamic>;
+              final data = docs[i].data() as Map<String, dynamic>;
               final community = CommunityModel.fromJson(
                   {...data, 'id': docs[i].id});
               return _CommunityCard(
                 community: community,
-                onTap: () =>
-                    _showCommunityDetail(community),
+                wasteType: data['wasteType'] ?? 'mixedOrganic',
+                pricePerKg: (data['agreedPricePerKg'] as num?)?.toDouble() ?? 5,
+                onTap: () => _showCommunityDetail(community),
               );
             },
           );
@@ -77,15 +92,15 @@ class _CommunityManagementScreenState
   void _showCreateDialog() {
     final nameCtrl = TextEditingController();
     final targetCtrl = TextEditingController();
-    String? county, subCounty, ward;
+    final priceCtrl = TextEditingController();
+    String? county, subCounty, ward, wasteType;
     DateTime? targetDate;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius:
-          BorderRadius.vertical(top: Radius.circular(24))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => Padding(
           padding: EdgeInsets.only(
@@ -102,60 +117,102 @@ class _CommunityManagementScreenState
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
+
                 TextField(
                   controller: nameCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Community Name',
+                    labelText: 'Community Name *',
                     hintText: 'e.g. Nakuru Green Cluster',
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                // Waste Type Selection
+                DropdownButtonFormField<String>(
+                  value: wasteType,
+                  decoration: const InputDecoration(
+                    labelText: 'Waste Type *',
+                    prefixIcon: Icon(Icons.recycling),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _wasteTypes.map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(_formatWasteType(type)),
+                    );
+                  }).toList(),
+                  onChanged: (v) => setS(() => wasteType = v),
+                ),
+                const SizedBox(height: 12),
+
                 TextField(
                   controller: targetCtrl,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Target Weight (kg)',
+                    labelText: 'Target Weight (kg) *',
                     hintText: 'e.g. 1000',
                     border: OutlineInputBorder(),
                     suffixText: 'kg',
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                TextField(
+                  controller: priceCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Price per KG (KSh) *',
+                    hintText: 'e.g. 5',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.money),
+                    suffixText: 'KSh/kg',
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // County Selection
                 DropdownButtonFormField<String>(
                   value: county,
                   decoration: const InputDecoration(
-                    labelText: 'County',
+                    labelText: 'County *',
                     border: OutlineInputBorder(),
                   ),
                   items: KenyaLocations.getCountyNames()
                       .map((c) => DropdownMenuItem(
                       value: c, child: Text(c)))
                       .toList(),
-                  onChanged: (v) =>
-                      setS(() { county = v; subCounty = null; ward = null; }),
+                  onChanged: (v) => setS(() {
+                    county = v;
+                    subCounty = null;
+                    ward = null;
+                  }),
                 ),
                 const SizedBox(height: 12),
+
                 if (county != null)
                   DropdownButtonFormField<String>(
                     value: subCounty,
                     decoration: const InputDecoration(
-                      labelText: 'Sub-County',
+                      labelText: 'Sub-County *',
                       border: OutlineInputBorder(),
                     ),
                     items: KenyaLocations.getSubCountyNames(county!)
                         .map((s) => DropdownMenuItem(
                         value: s, child: Text(s)))
                         .toList(),
-                    onChanged: (v) =>
-                        setS(() { subCounty = v; ward = null; }),
+                    onChanged: (v) => setS(() {
+                      subCounty = v;
+                      ward = null;
+                    }),
                   ),
                 if (county != null) const SizedBox(height: 12),
+
                 if (subCounty != null)
                   DropdownButtonFormField<String>(
                     value: ward,
                     decoration: const InputDecoration(
-                      labelText: 'Ward',
+                      labelText: 'Ward (Optional)',
                       border: OutlineInputBorder(),
                     ),
                     items: KenyaLocations.getWardNames(
@@ -167,6 +224,7 @@ class _CommunityManagementScreenState
                   ),
                 if (subCounty != null)
                   const SizedBox(height: 12),
+
                 OutlinedButton.icon(
                   onPressed: () async {
                     final picked = await showDatePicker(
@@ -187,41 +245,72 @@ class _CommunityManagementScreenState
                       : 'Target: ${targetDate!.day}/${targetDate!.month}/${targetDate!.year}'),
                 ),
                 const SizedBox(height: 16),
+
                 ElevatedButton(
                   onPressed: () async {
-                    if (nameCtrl.text.trim().isEmpty ||
-                        targetCtrl.text.isEmpty ||
-                        county == null ||
-                        subCounty == null) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(
-                        content:
-                        Text('Fill all required fields'),
-                        backgroundColor: Colors.red,
-                      ));
+                    if (nameCtrl.text.trim().isEmpty) {
+                      _showError(ctx, 'Enter community name');
                       return;
                     }
-                    await _firestore
-                        .collection('communities')
-                        .add({
+                    if (wasteType == null) {
+                      _showError(ctx, 'Select waste type');
+                      return;
+                    }
+                    if (targetCtrl.text.trim().isEmpty) {
+                      _showError(ctx, 'Enter target weight');
+                      return;
+                    }
+                    if (priceCtrl.text.trim().isEmpty) {
+                      _showError(ctx, 'Enter price per KG');
+                      return;
+                    }
+                    if (county == null) {
+                      _showError(ctx, 'Select county');
+                      return;
+                    }
+                    if (subCounty == null) {
+                      _showError(ctx, 'Select sub-county');
+                      return;
+                    }
+
+                    final targetWeight = double.tryParse(targetCtrl.text);
+                    if (targetWeight == null || targetWeight <= 0) {
+                      _showError(ctx, 'Invalid target weight');
+                      return;
+                    }
+
+                    final price = double.tryParse(priceCtrl.text);
+                    if (price == null || price <= 0) {
+                      _showError(ctx, 'Invalid price');
+                      return;
+                    }
+
+                    await _firestore.collection('communities').add({
                       'name': nameCtrl.text.trim(),
-                      'adminId': 'admin',
+                      'wasteType': wasteType,
+                      'agreedPricePerKg': price,
+                      'adminId': FirebaseAuth.instance.currentUser?.uid ?? 'admin',
                       'county': county,
                       'subCounty': subCounty,
                       'ward': ward ?? '',
-                      'targetWeightKg': double.tryParse(
-                          targetCtrl.text) ??
-                          1000,
+                      'targetWeightKg': targetWeight,
                       'currentEstimatedKg': 0,
                       'actualCollectedKg': 0,
                       'farmerIds': [],
                       'status': 'forming',
-                      'createdAt':
-                      DateTime.now().toIso8601String(),
-                      'targetDate':
-                      targetDate?.toIso8601String(),
+                      'createdAt': DateTime.now().toIso8601String(),
+                      'targetDate': targetDate?.toIso8601String(),
                     });
-                    if (ctx.mounted) Navigator.pop(ctx);
+
+                    if (ctx.mounted) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(
+                          content: Text('Community created successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.pop(ctx);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen),
@@ -235,30 +324,61 @@ class _CommunityManagementScreenState
     );
   }
 
+  void _showError(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   void _showCommunityDetail(CommunityModel community) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            CommunityDetailScreen(community: community),
+        builder: (_) => CommunityDetailScreen(community: community),
       ),
     );
+  }
+
+  String _formatWasteType(String type) {
+    final map = {
+      'cropResidue': 'Crop Residue',
+      'livestockManure': 'Livestock Manure',
+      'fruitWaste': 'Fruit Waste',
+      'coffeeHusks': 'Coffee Husks',
+      'vegetableWaste': 'Vegetable Waste',
+      'sugarcaneBagasse': 'Sugarcane Bagasse',
+      'mixedOrganic': 'Mixed Organic Waste',
+      'riceHusks': 'Rice Husks',
+      'coconutWaste': 'Coconut Waste',
+      'maizeStover': 'Maize Stover',
+    };
+    return map[type] ?? type;
   }
 }
 
 class _CommunityCard extends StatelessWidget {
   final CommunityModel community;
+  final String wasteType;
+  final double pricePerKg;
   final VoidCallback onTap;
 
-  const _CommunityCard(
-      {required this.community, required this.onTap});
+  const _CommunityCard({
+    required this.community,
+    required this.wasteType,
+    required this.pricePerKg,
+    required this.onTap,
+  });
 
   Color get _statusColor {
     switch (community.status) {
-      case CommunityStatus.active: return Colors.green;
-      case CommunityStatus.collected: return Colors.blue;
-      case CommunityStatus.completed: return Colors.purple;
-      default: return Colors.orange;
+      case CommunityStatus.active:
+        return Colors.green;
+      case CommunityStatus.collected:
+        return Colors.blue;
+      case CommunityStatus.completed:
+        return Colors.purple;
+      default:
+        return Colors.orange;
     }
   }
 
@@ -277,14 +397,25 @@ class _CommunityCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(community.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(community.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatWasteType(wasteType),
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -304,12 +435,18 @@ class _CommunityCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(
-                  '${community.subCounty}, ${community.county}',
+              Text('${community.subCounty}, ${community.county}',
                   style: const TextStyle(
                       color: Colors.grey, fontSize: 13)),
-              const SizedBox(height: 12),
-              // Progress bar
+              const SizedBox(height: 8),
+              Text(
+                'KSh ${pricePerKg.toStringAsFixed(0)}/kg',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.primaryGreen),
+              ),
+              const SizedBox(height: 8),
               Row(children: [
                 Expanded(
                   child: ClipRRect(
@@ -318,8 +455,7 @@ class _CommunityCard extends StatelessWidget {
                       value: community.progressPercent,
                       minHeight: 8,
                       backgroundColor: Colors.grey.shade200,
-                      valueColor:
-                      AlwaysStoppedAnimation<Color>(
+                      valueColor: AlwaysStoppedAnimation<Color>(
                         community.targetReached
                             ? Colors.green
                             : AppColors.primaryGreen,
@@ -340,8 +476,7 @@ class _CommunityCard extends StatelessWidget {
                 const Icon(Icons.group,
                     size: 14, color: Colors.grey),
                 const SizedBox(width: 4),
-                Text(
-                    '${community.farmerIds.length} farmers',
+                Text('${community.farmerIds.length} farmers',
                     style: const TextStyle(
                         fontSize: 12, color: Colors.grey)),
                 if (community.targetReached) ...[
@@ -361,5 +496,21 @@ class _CommunityCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatWasteType(String type) {
+    final map = {
+      'cropResidue': 'Crop Residue',
+      'livestockManure': 'Livestock Manure',
+      'fruitWaste': 'Fruit Waste',
+      'coffeeHusks': 'Coffee Husks',
+      'vegetableWaste': 'Vegetable Waste',
+      'sugarcaneBagasse': 'Sugarcane Bagasse',
+      'mixedOrganic': 'Mixed Organic Waste',
+      'riceHusks': 'Rice Husks',
+      'coconutWaste': 'Coconut Waste',
+      'maizeStover': 'Maize Stover',
+    };
+    return map[type] ?? type;
   }
 }
