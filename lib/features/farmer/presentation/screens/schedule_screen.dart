@@ -985,7 +985,7 @@ class _ScheduleCard extends StatelessWidget {
                 ),
               );
             },
-            activeThumbColor: AppColors.primaryGreen,
+            activeTrackColor: AppColors.primaryGreen,
           ),
         ],
       ),
@@ -1059,7 +1059,7 @@ class _ScheduleFormState extends State<_ScheduleForm> {
               Switch(
                 value: _isActive,
                 onChanged: (value) => setState(() => _isActive = value),
-                activeThumbColor: AppColors.primaryGreen,
+                activeTrackColor: AppColors.primaryGreen,
               ),
             ],
           ),

@@ -27,6 +27,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   List<Map<String, dynamic>> _farmerLocations = [];
   List<Map<String, dynamic>> _recentFarmers = [];
   List<Map<String, dynamic>> _urgentPickups = [];
+  List<Map<String, dynamic>> _allFarmers = [];
+  List<Map<String, dynamic>> _allDrivers = [];
   bool _loading = true;
   String? _error;
 
@@ -68,6 +70,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           .get();
       _totalFarmers = farmersSnap.size;
 
+      // Store all farmers for deletion
+      _allFarmers = farmersSnap.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'uid': data['uid'] ?? doc.id,
+          'name': data['fullName'] ?? 'Unknown',
+          'phone': data['phoneNumber'] ?? '',
+          'email': data['email'] ?? '',
+          'county': data['county'] ?? 'Unknown',
+          'waste': (data['estimatedWasteKg'] ?? 0).toInt(),
+          'joinedAt': data['createdAt'] != null
+              ? (data['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
+          'latitude': data['latitude'],
+          'longitude': data['longitude'],
+        };
+      }).toList();
+
       // Get farmers with coordinates for map
       _farmerLocations = farmersSnap.docs
           .where((doc) {
@@ -93,6 +114,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         final data = doc.data();
         return {
           'id': doc.id,
+          'uid': data['uid'] ?? doc.id,
           'name': data['fullName'] ?? 'Unknown',
           'phone': data['phoneNumber'] ?? '',
           'county': data['county'] ?? 'Unknown',
@@ -111,6 +133,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           .where('role', isEqualTo: 'driver')
           .get();
       _totalDrivers = driversSnap.size;
+
+      // Store all drivers for deletion
+      _allDrivers = driversSnap.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'uid': data['uid'] ?? doc.id,
+          'name': data['fullName'] ?? 'Unknown',
+          'phone': data['phoneNumber'] ?? '',
+          'email': data['email'] ?? '',
+          'county': data['county'] ?? 'Unknown',
+          'vehicle': data['vehicle'] ?? 'N/A',
+          'status': data['status'] ?? 'idle',
+          'joinedAt': data['createdAt'] != null
+              ? (data['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
+        };
+      }).toList();
 
       // Load communities
       final communitiesSnap = await _firestore.collection('communities').get();
@@ -176,6 +216,101 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     setState(() => _loading = false);
   }
 
+  // ─── DELETE USER FUNCTION ───
+  Future<void> _deleteUser(String userId, String userUid, String userName, String role) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete User'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to delete this $role?',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text('Name: $userName'),
+            Text('ID: $userId'),
+            const SizedBox(height: 8),
+            const Text(
+              'This action cannot be undone!',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: Colors.red),
+            SizedBox(height: 16),
+            Text('Deleting user...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      await _firestore.collection('users').doc(userId).delete();
+      print('✅ User document deleted from Firestore');
+
+      final listingsSnap = await _firestore
+          .collection('listings')
+          .where('farmerId', isEqualTo: userUid)
+          .get();
+
+      for (var doc in listingsSnap.docs) {
+        await _firestore.collection('listings').doc(doc.id).delete();
+      }
+      print('✅ Deleted ${listingsSnap.docs.length} associated listings');
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ $userName deleted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      await _loadDashboardData();
+
+    } catch (e) {
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting user: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdminShell(child: Scaffold(
@@ -209,19 +344,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Card
               _buildWelcomeCard(),
               const SizedBox(height: 20),
-
-              // Quick Actions (Always visible)
               _buildQuickActions(),
               const SizedBox(height: 20),
-
-              // Farmer Locations Map
               _buildFarmerMap(),
               const SizedBox(height: 20),
-
-              // Collapsible Stats Section
               _buildCollapsibleSection(
                 title: 'Platform Statistics',
                 icon: Icons.analytics,
@@ -230,18 +358,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: _buildStatsGrid(),
               ),
               const SizedBox(height: 12),
-
-              // Collapsible Recent Farmers Section
               _buildCollapsibleSection(
-                title: 'Recent Farmers',
+                title: 'Recent Farmers (${_recentFarmers.length})',
                 icon: Icons.people,
                 isExpanded: _showFarmersList,
                 onToggle: () => setState(() => _showFarmersList = !_showFarmersList),
                 child: _buildRecentFarmersList(),
               ),
               const SizedBox(height: 12),
-
-              // Collapsible Urgent Pickups Section
               if (_urgentPickups.isNotEmpty)
                 _buildCollapsibleSection(
                   title: 'Urgent Pickups (${_urgentPickups.length})',
@@ -281,7 +405,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 32),
           ),
           const SizedBox(width: 16),
-         
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome, $adminName',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  'Manage your agricultural waste platform',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -387,7 +529,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       );
     }
 
-    // Get center point (average of all locations)
     double centerLat = _farmerLocations.fold<double>(0, (sum, f) => sum + (f['latitude'] ?? 0)) / _farmerLocations.length;
     double centerLng = _farmerLocations.fold<double>(0, (sum, f) => sum + (f['longitude'] ?? 0)) / _farmerLocations.length;
 
@@ -452,7 +593,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildQuickActions() {
-    // In admin_dashboard_screen.dart, update quick actions:
     final actions = [
       ('Farmers', Icons.people, Colors.green, _showFarmersDetail),
       ('Drivers', Icons.local_shipping, Colors.blue, _showDriversDetail),
@@ -582,6 +722,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // ─── FIXED: Recent Farmers List ───
   Widget _buildRecentFarmersList() {
     if (_recentFarmers.isEmpty) {
       return const Center(
@@ -598,22 +739,75 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return Column(
           children: [
             ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              dense: true,
               leading: CircleAvatar(
                 backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
+                radius: 16,
                 child: Text(
                   farmer['name'][0].toUpperCase(),
-                  style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
               ),
-              title: Text(farmer['name'], style: const TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text('${farmer['phone']} • ${farmer['county']} • ${farmer['waste']} kg'),
-              trailing: Chip(
-                label: Text(_formatDate(farmer['joinedAt']), style: const TextStyle(fontSize: 10)),
-                backgroundColor: Colors.grey.shade100,
+              title: Text(
+                farmer['name'],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              subtitle: Text(
+                farmer['county'] ?? 'Unknown',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: const TextStyle(fontSize: 11),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _formatDate(farmer['joinedAt']),
+                      style: const TextStyle(fontSize: 8),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () => _deleteUser(
+                      farmer['id'],
+                      farmer['uid'],
+                      farmer['name'],
+                      'farmer',
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               onTap: () => _showFarmerDetails(farmer),
             ),
-            if (entry.key != _recentFarmers.length - 1) const Divider(height: 0, indent: 72),
+            if (entry.key != _recentFarmers.length - 1) const Divider(height: 0, indent: 56),
           ],
         );
       }).toList(),
@@ -627,31 +821,46 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return Column(
           children: [
             ListTile(
-              leading: const Icon(Icons.warning, color: Colors.orange),
-              title: Text(pickup['farmerName']),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              dense: true,
+              leading: const Icon(Icons.warning, color: Colors.orange, size: 24),
+              title: Text(
+                pickup['farmerName'],
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
               subtitle: Text(
-                '${pickup['wasteType']} • ${pickup['quantity']} kg • Waiting ${pickup['waitingDays']} days',
+                '${pickup['wasteType']} • ${pickup['quantity']} kg • ${pickup['waitingDays']} days',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: const TextStyle(fontSize: 12),
               ),
               trailing: SizedBox(
-                width: 120,
+                width: 90,
                 child: ElevatedButton(
                   onPressed: () => _assignDriver(pickup),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    minimumSize: const Size(70, 32),
                   ),
-                  child: const Text('Assign'),
+                  child: const Text('Assign', style: TextStyle(fontSize: 11)),
                 ),
               ),
             ),
-            if (entry.key != _urgentPickups.length - 1) const Divider(height: 0, indent: 72),
+            if (entry.key != _urgentPickups.length - 1) const Divider(height: 0, indent: 56),
           ],
         );
       }).toList(),
     );
   }
 
-  // Detail dialogs
+  // ─── DETAIL DIALOGS ───
   void _showFarmersDetail() {
     showModalBottomSheet(
       context: context,
@@ -665,33 +874,72 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Farmers Overview',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Total: $_totalFarmers farmers',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Farmers Overview',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Total: $_totalFarmers',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
-                itemCount: _recentFarmers.length,
+                itemCount: _allFarmers.length,
                 itemBuilder: (context, index) {
-                  final farmer = _recentFarmers[index];
+                  final farmer = _allFarmers[index];
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      dense: true,
                       leading: CircleAvatar(
                         backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
-                        child: Text(farmer['name'][0].toUpperCase()),
+                        radius: 18,
+                        child: Text(
+                          farmer['name'][0].toUpperCase(),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      title: Text(farmer['name']),
-                      subtitle: Text('${farmer['phone']} • ${farmer['waste']} kg'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.visibility),
-                        onPressed: () => _showFarmerDetails(farmer),
+                      title: Text(
+                        farmer['name'],
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        '${farmer['phone']} • ${farmer['county']}',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
+                            onPressed: () => _showFarmerDetails(farmer),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                            onPressed: () => _deleteUser(
+                              farmer['id'],
+                              farmer['uid'],
+                              farmer['name'],
+                              'farmer',
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -713,36 +961,105 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
-        height: MediaQuery.of(context).size.height * 0.6,
+        height: MediaQuery.of(context).size.height * 0.8,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Drivers Overview',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Total: $_totalDrivers drivers',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Drivers Overview',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Total: $_totalDrivers',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.local_shipping, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    '$_totalDrivers Active Drivers',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => NavigationService.push('/admin/fleet'),
-                    child: const Text('Manage Fleet'),
-                  ),
-                ],
+            Expanded(
+              child: ListView.builder(
+                itemCount: _allDrivers.length,
+                itemBuilder: (context, index) {
+                  final driver = _allDrivers[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      dense: true,
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blue.withOpacity(0.1),
+                        radius: 18,
+                        child: Text(
+                          driver['name'][0].toUpperCase(),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      title: Text(
+                        driver['name'],
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        '${driver['phone']} • ${driver['vehicle']}',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: driver['status'] == 'active' ? Colors.green.shade100 : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              driver['status'],
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: driver['status'] == 'active' ? Colors.green.shade700 : Colors.grey.shade600,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                            onPressed: () => _deleteUser(
+                              driver['id'],
+                              driver['uid'],
+                              driver['name'],
+                              'driver',
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  NavigationService.push('/admin/fleet');
+                },
+                icon: const Icon(Icons.manage_accounts),
+                label: const Text('Manage Fleet'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                ),
               ),
             ),
           ],
@@ -786,7 +1103,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
-                    onPressed: () => NavigationService.push('/admin/communities'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      NavigationService.push('/admin/communities');
+                    },
                     child: const Text('Manage Communities'),
                   ),
                 ],
@@ -872,10 +1192,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ..._urgentPickups.map((pickup) => Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  dense: true,
                   leading: const Icon(Icons.warning, color: Colors.orange),
-                  title: Text(pickup['farmerName']),
-                  subtitle: Text('${pickup['wasteType']} • ${pickup['quantity']} kg'),
-                  trailing: Text('${pickup['waitingDays']} days', style: const TextStyle(color: Colors.red)),
+                  title: Text(
+                    pickup['farmerName'],
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  subtitle: Text(
+                    '${pickup['wasteType']} • ${pickup['quantity']} kg',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  trailing: Text(
+                    '${pickup['waitingDays']} days',
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
                 ),
               )),
             ] else
@@ -957,7 +1290,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                    // Navigate to map view centered on farmer
                   },
                   icon: const Icon(Icons.map),
                   label: const Text('View on Map'),
@@ -970,6 +1302,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
           ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteUser(
+                farmer['id'],
+                farmer['uid'],
+                farmer['name'],
+                'farmer',
+              );
+            },
+            icon: const Icon(Icons.delete, color: Colors.white, size: 16),
+            label: const Text('Delete User'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -980,7 +1329,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       children: [
         Icon(icon, size: 18, color: Colors.grey),
         const SizedBox(width: 8),
-        Text(text),
+        Expanded(child: Text(text)),
       ],
     );
   }
@@ -994,7 +1343,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Select a driver for this pickup'),
-            // Add driver selection dropdown here
           ],
         ),
         actions: [

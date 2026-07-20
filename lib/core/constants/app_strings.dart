@@ -1,7 +1,7 @@
 // lib/core/constants/app_strings.dart
 class AppStrings {
   // App name
-  static const String appName = 'Agri-Waste Connect';
+  static const String appName = 'Agri Cycle';
   
   // Auth screens
   static const String loginTitle = 'Welcome Back';

@@ -1,5 +1,5 @@
-name: agri_waste_connected
-description: Agri-Waste Connect - Agricultural Waste Management Platform
+name: agri_cycle
+description: Agri Cycle  - Agricultural Waste Management Platform
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -34,6 +34,7 @@ dependencies:
 
   # Location & Media
   geolocator: ^10.1.0
+  geocoding: ^2.1.0
   image_picker: ^1.0.5
 
   # Utilities
@@ -49,6 +50,23 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/logo/
+    - assets/logo/arrows.png
+    - assets/logo/leaf.png
+    - assets/logo/logo.png
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo/logo.png"
+  adaptive_icon_background: "#2E7D32"
+  adaptive_icon_foreground: "assets/logo/logo.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true

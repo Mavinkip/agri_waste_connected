@@ -1,15 +1,15 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.example.agri_waste_connected"
-    compileSdk = 36  // Using fixed version for stability
+    compileSdk = 35  // ← This is correct
     ndkVersion = "28.2.13676358"
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -20,9 +20,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.agri_waste_connected"
-        minSdk = flutter.minSdkVersion
-        targetSdk = 36
+        applicationId = "com.agricycle.app"
+        minSdk = 23
+        targetSdk = 35  // ← Update this too
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

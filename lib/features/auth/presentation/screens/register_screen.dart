@@ -39,14 +39,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _loadCounties() {
     setState(() {
       _counties = KenyaLocations.getCountyNames();
-      print('Loaded counties: $_counties'); // Debug print
     });
   }
 
   void _loadSubCounties(String county) {
-    print('Loading sub-counties for: $county'); // Debug print
     final subCounties = KenyaLocations.getSubCountyNames(county);
-    print('Found sub-counties: $subCounties'); // Debug print
 
     setState(() {
       _availableSubCounties = subCounties;
@@ -54,35 +51,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _selectedWard = null;
       _availableWards = [];
     });
-
-    if (_availableSubCounties.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No sub-counties found for $county'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    }
   }
 
   void _loadWards(String county, String subCounty) {
-    print('Loading wards for: $county - $subCounty'); // Debug print
     final wards = KenyaLocations.getWardNames(county, subCounty);
-    print('Found wards: $wards'); // Debug print
 
     setState(() {
       _availableWards = wards;
       _selectedWard = null;
     });
-
-    if (_availableWards.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No wards found for $subCounty'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    }
   }
 
   @override
@@ -132,38 +109,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final email = '$phone@agri.local';
       final name = _nameController.text.trim();
 
-      print('Registering user: $name, $phone, $email'); // Debug print
-
       // Create Firebase Auth user
       final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: _passwordController.text,
       );
 
-      print('User created: ${credential.user!.uid}'); // Debug print
-
       // Store user data in Firestore with region info including ward
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
           .set({
+        'uid': credential.user!.uid,
         'fullName': name,
         'phoneNumber': phone,
+        'email': email,
         'role': 'farmer',
         'county': _selectedCounty,
         'subCounty': _selectedSubCounty,
         'ward': _selectedWard,
         'createdAt': FieldValue.serverTimestamp(),
         'isActive': true,
+        'status': 'active',
         'totalEarnings': 0,
         'completedPickups': 0,
         'consistencyScore': 70,
       });
 
-      print('User data saved to Firestore'); // Debug print
-
       if (mounted) {
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(
@@ -181,7 +154,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         NavigationService.pop();
       }
     } on FirebaseAuthException catch (e) {
-      print('FirebaseAuthException: ${e.code} - ${e.message}'); // Debug print
       String msg;
       switch (e.code) {
         case 'email-already-in-use':
@@ -201,9 +173,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _loading = false;
       });
     } catch (e) {
-      print('General error: $e'); // Debug print
       setState(() {
-        _error = 'Something went wrong: $e';
+        _error = 'Something went wrong. Please try again.';
         _loading = false;
       });
     }
@@ -214,8 +185,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Register'),
+        title: const Text('Register as Farmer'),
         centerTitle: true,
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

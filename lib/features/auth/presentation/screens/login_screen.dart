@@ -33,6 +33,34 @@ class _LoginScreenState extends State<LoginScreen> {
   String _cleanPhone(String phone) =>
       phone.replaceAll(RegExp(r'[^0-9]'), '');
 
+  // ── Create Admin in Firebase ──
+  Future<UserCredential> _createAdmin() async {
+    print('📝 Creating admin user in Firebase Auth...');
+    final credential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(
+      email: _adminEmail,
+      password: _adminPassword,
+    );
+
+    print('✅ Admin user created in Firebase Auth: ${credential.user!.uid}');
+
+    // Create admin document in Firestore
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(credential.user!.uid)
+        .set({
+      'uid': credential.user!.uid,
+      'email': _adminEmail,
+      'role': 'admin',
+      'fullName': 'System Admin',
+      'createdAt': FieldValue.serverTimestamp(),
+      'status': 'active',
+    });
+
+    print('✅ Admin document created in Firestore');
+    return credential;
+  }
+
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _loading = true; _error = null; });
@@ -40,47 +68,144 @@ class _LoginScreenState extends State<LoginScreen> {
     final input = _phoneController.text.trim();
     final password = _passwordController.text;
 
+    print('🔐 Login attempt - Input: "$input"');
+
     // ── ADMIN LOGIN ──
     if (input == _adminEmail && password == _adminPassword) {
-      if (mounted) NavigationService.pushReplacement('/admin/dashboard');
+      print('🔐 Admin login - authenticating...');
+      try {
+        UserCredential? credential;
+
+        try {
+          // Try to sign in first
+          credential = await FirebaseAuth.instance
+              .signInWithEmailAndPassword(
+            email: _adminEmail,
+            password: _adminPassword,
+          );
+          print('✅ Admin signed in successfully');
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'user-not-found') {
+            // Admin doesn't exist - create it
+            credential = await _createAdmin();
+          } else if (e.code == 'wrong-password') {
+            throw Exception('Incorrect admin password. Please contact support.');
+          } else {
+            throw Exception('Admin login error: ${e.message}');
+          }
+        }
+
+        if (credential != null && credential.user != null) {
+          // Check if admin document exists in Firestore
+          try {
+            final doc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(credential.user!.uid)
+                .get();
+
+            if (!doc.exists) {
+              // Create admin document if it doesn't exist
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(credential.user!.uid)
+                  .set({
+                'uid': credential.user!.uid,
+                'email': _adminEmail,
+                'role': 'admin',
+                'fullName': 'System Admin',
+                'createdAt': FieldValue.serverTimestamp(),
+                'status': 'active',
+              });
+              print('✅ Admin document created in Firestore');
+            }
+          } catch (e) {
+            // If Firestore fails, we can still continue since admin is authenticated
+            print('⚠️ Firestore check failed, but admin is authenticated: $e');
+          }
+
+          if (mounted) {
+            setState(() => _loading = false);
+            NavigationService.pushReplacement('/admin/dashboard');
+          }
+        }
+      } on FirebaseAuthException catch (e) {
+        print('❌ Admin Firebase auth error: ${e.code} - ${e.message}');
+        String msg;
+        switch (e.code) {
+          case 'user-not-found':
+            msg = 'Admin account not found. Please contact support.';
+            break;
+          case 'wrong-password':
+            msg = 'Incorrect admin password. Please contact support.';
+            break;
+          case 'too-many-requests':
+            msg = 'Too many attempts. Please try again later.';
+            break;
+          default:
+            msg = 'Admin login failed: ${e.message}';
+        }
+        setState(() { _error = msg; _loading = false; });
+      } catch (e) {
+        print('❌ Admin unexpected error: $e');
+        setState(() {
+          _error = e.toString().replaceAll('Exception: ', '');
+          _loading = false;
+        });
+      }
       return;
     }
 
     // ── EMAIL LOGIN (Company or other email users) ──
     if (input.contains('@')) {
       try {
+        print('📧 Attempting email login for: $input');
         final credential = await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: input, password: password);
 
         if (credential.user != null) {
-          final doc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(credential.user!.uid)
-              .get();
+          print('✅ Email login successful! UID: ${credential.user!.uid}');
 
-          if (!doc.exists) {
+          try {
+            final doc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(credential.user!.uid)
+                .get();
+
+            if (!doc.exists) {
+              print('❌ User document not found in Firestore');
+              setState(() {
+                _error = 'Account not found. Please contact admin.';
+                _loading = false;
+              });
+              return;
+            }
+
+            final role = doc.data()?['role'] ?? 'farmer';
+            print('✅ User role: $role');
+
+            if (mounted) {
+              setState(() => _loading = false);
+              switch (role) {
+                case 'company':
+                  NavigationService.pushReplacement('/company/dashboard');
+                  break;
+                case 'driver':
+                  NavigationService.pushReplacement('/driver/home');
+                  break;
+                default:
+                  NavigationService.pushReplacement('/farmer/home');
+              }
+            }
+          } on FirebaseAuthException catch (e) {
+            print('❌ Firestore error: ${e.code} - ${e.message}');
             setState(() {
-              _error = 'Account not found. Please contact admin.';
+              _error = 'Error accessing your account data. Please try again.';
               _loading = false;
             });
-            return;
-          }
-
-          final role = doc.data()?['role'] ?? 'farmer';
-          if (mounted) {
-            switch (role) {
-              case 'company':
-                NavigationService.pushReplacement('/company/dashboard');
-                break;
-              case 'driver':
-                NavigationService.pushReplacement('/driver/home');
-                break;
-              default:
-                NavigationService.pushReplacement('/farmer/home');
-            }
           }
         }
       } on FirebaseAuthException catch (e) {
+        print('❌ Email login error: ${e.code} - ${e.message}');
         String msg;
         switch (e.code) {
           case 'user-not-found':
@@ -100,6 +225,12 @@ class _LoginScreenState extends State<LoginScreen> {
             msg = 'Login failed. Please try again.';
         }
         setState(() { _error = msg; _loading = false; });
+      } catch (e) {
+        print('❌ Email login unexpected error: $e');
+        setState(() {
+          _error = 'Something went wrong. Please try again.';
+          _loading = false;
+        });
       }
       return;
     }
@@ -107,38 +238,59 @@ class _LoginScreenState extends State<LoginScreen> {
     // ── PHONE LOGIN (farmer / driver) ──
     try {
       final phone = _cleanPhone(input);
+      final loginEmail = '$phone@agri.local';
+
+      print('📱 Phone login attempt with email: $loginEmail');
+
       final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
-        email: '$phone@agri.local',
+        email: loginEmail,
         password: password,
       );
 
       if (credential.user != null) {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(credential.user!.uid)
-            .get();
+        print('✅ Phone login successful! UID: ${credential.user!.uid}');
 
-        if (!doc.exists) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(credential.user!.uid)
+              .get();
+
+          if (!doc.exists) {
+            print('❌ User document not found in Firestore');
+            setState(() {
+              _error = 'Account not found. Please register.';
+              _loading = false;
+            });
+            return;
+          }
+
+          final role = doc.data()?['role'] ?? 'farmer';
+          print('✅ User role: $role');
+
+          if (mounted) {
+            setState(() => _loading = false);
+            switch (role) {
+              case 'driver':
+                print('🚗 Navigating to driver home');
+                NavigationService.pushReplacement('/driver/home');
+                break;
+              default:
+                print('🌾 Navigating to farmer home');
+                NavigationService.pushReplacement('/farmer/home');
+            }
+          }
+        } on FirebaseAuthException catch (e) {
+          print('❌ Firestore error: ${e.code} - ${e.message}');
           setState(() {
-            _error = 'Account not found. Please register.';
+            _error = 'Error accessing your account data. Please try again.';
             _loading = false;
           });
-          return;
-        }
-
-        final role = doc.data()?['role'] ?? 'farmer';
-        if (mounted) {
-          switch (role) {
-            case 'driver':
-              NavigationService.pushReplacement('/driver/home');
-              break;
-            default:
-              NavigationService.pushReplacement('/farmer/home');
-          }
         }
       }
     } on FirebaseAuthException catch (e) {
+      print('❌ Phone login error: ${e.code} - ${e.message}');
       String msg;
       switch (e.code) {
         case 'user-not-found':
@@ -159,6 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       setState(() { _error = msg; _loading = false; });
     } catch (e) {
+      print('❌ Phone login unexpected error: $e');
       setState(() {
         _error = 'Something went wrong. Please try again.';
         _loading = false;
@@ -179,24 +332,34 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 60),
               Center(
                 child: Container(
-                  width: 100, height: 100,
+                  width: 100,
+                  height: 100,
                   decoration: BoxDecoration(
                     color: AppColors.primaryGreen,
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  child: const Icon(Icons.agriculture_rounded,
-                      color: Colors.white, size: 50),
+                  child: const Icon(
+                    Icons.agriculture_rounded,
+                    color: Colors.white,
+                    size: 50,
+                  ),
                 ),
               ),
               const SizedBox(height: 30),
-              const Text('Welcome Back!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 28, fontWeight: FontWeight.bold)),
+              const Text(
+                'Welcome Back!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text('Login with phone number or email',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Colors.grey)),
+              const Text(
+                'Login with phone number or email',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
               const SizedBox(height: 40),
 
               Form(
@@ -227,9 +390,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       prefixIcon: const Icon(Icons.lock),
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscure
-                            ? Icons.visibility_off
-                            : Icons.visibility),
+                        icon: Icon(
+                          _obscure ? Icons.visibility_off : Icons.visibility,
+                        ),
                         onPressed: () =>
                             setState(() => _obscure = !_obscure),
                       ),
@@ -253,13 +416,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: Border.all(color: Colors.red.shade200),
                     ),
                     child: Row(children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.red, size: 18),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
-                          child: Text(_error!,
-                              style: const TextStyle(
-                                  color: Colors.red, fontSize: 13))),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     ]),
                   ),
                 ),
@@ -272,33 +443,46 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: _loading
                       ? const SizedBox(
-                      width: 22, height: 22,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                      : const Text('Login',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : const Text(
+                    'Login',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                TextButton(
-                  onPressed: () => NavigationService.push('/register'),
-                  child: const Text('Register as Farmer'),
-                ),
-                const Text(' | ',
-                    style: TextStyle(color: Colors.grey)),
-                TextButton(
-                  onPressed: () =>
-                      NavigationService.push('/register-driver'),
-                  child: const Text('Register as Driver'),
-                ),
-              ]),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () => NavigationService.push('/register'),
+                    child: const Text('Register as Farmer'),
+                  ),
+                  const Text(
+                    ' | ',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        NavigationService.push('/register-driver'),
+                    child: const Text('Register as Driver'),
+                  ),
+                ],
+              ),
               TextButton(
                 onPressed: () =>
                     NavigationService.push('/forgot-password'),
@@ -317,14 +501,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Column(
                   children: [
                     Row(children: [
-                      Icon(Icons.info_outline,
-                          color: Colors.blue, size: 16),
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.blue,
+                        size: 16,
+                      ),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Company Login: Use your email address',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.blue),
+                            fontSize: 12,
+                            color: Colors.blue,
+                          ),
                         ),
                       ),
                     ]),
@@ -333,9 +522,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(width: 24),
                       Expanded(
                         child: Text(
-                          'Farmer Login: Use phone number',
+                          'Farmer/Driver Login: Use phone number',
                           style: TextStyle(
-                              fontSize: 11, color: Colors.blue),
+                            fontSize: 11,
+                            color: Colors.blue,
+                          ),
                         ),
                       ),
                     ]),

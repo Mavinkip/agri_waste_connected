@@ -33,6 +33,7 @@ import 'features/farmer/presentation/bloc/farmer_bloc.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/farmer/presentation/bloc/sell_wizard_cubit.dart';
 import 'features/driver/presentation/screens/driver_login_screen.dart';
+import 'features/driver/presentation/screens/driver_home_screen.dart';  // ✅ ADD THIS IMPORT
 import 'features/driver/presentation/screens/driver_route_screen.dart';
 import 'features/driver/presentation/screens/arrival_screen.dart';
 import 'features/driver/presentation/screens/weigh_in_screen.dart';
@@ -111,7 +112,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Agri-Waste Connect',
+        title: 'Agri Cycle',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         navigatorKey: NavigationService.navigatorKey,
@@ -135,6 +136,8 @@ class MyApp extends StatelessWidget {
           '/farmer/schedule': (context) => const ScheduleScreen(),
           '/farmer/communities': (context) => const JoinCommunityScreen(),
           '/register-driver': (context) => const RegisterDriverScreen(),
+          // ✅ ADDED: Driver Home Route
+          '/driver/home': (context) => const DriverHomeScreen(),
           '/driver/login': (context) => const DriverLoginScreen(),
           '/driver/route': (context) => const DriverRouteScreen(),
           '/driver/arrival': (context) =>
@@ -153,12 +156,10 @@ class MyApp extends StatelessWidget {
           '/admin/inventory': (context) => const InventoryTrackerScreen(),
           '/admin/communities': (context) => const CommunityManagementScreen(),
           '/admin/companies': (context) => const CompaniesScreen(),
-          // Add these routes:
           '/admin/companies': (context) => const CompanyManagementScreen(),
           '/company/dashboard': (context) => const CompanyDashboardScreen(),
           '/admin/pickups': (context) => const PickupManagementScreen(),
           '/admin/farmer': (context) =>
-
           const FarmerProfileScreen(farmerId: 'farmer123'),
         },
       ),
