@@ -33,7 +33,7 @@ import 'features/farmer/presentation/bloc/farmer_bloc.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/farmer/presentation/bloc/sell_wizard_cubit.dart';
 import 'features/driver/presentation/screens/driver_login_screen.dart';
-import 'features/driver/presentation/screens/driver_home_screen.dart';  // ✅ ADD THIS IMPORT
+import 'features/driver/presentation/screens/driver_home_screen.dart';
 import 'features/driver/presentation/screens/driver_route_screen.dart';
 import 'features/driver/presentation/screens/arrival_screen.dart';
 import 'features/driver/presentation/screens/weigh_in_screen.dart';
@@ -55,14 +55,20 @@ import 'features/admin/presentation/screens/companies_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ─── Show splash screen immediately ───
+  runApp(const MyApp());
+
+  // ─── Initialize Firebase in the background ───
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    print('✅ Firebase initialized');
   } catch (e) {
     debugPrint('Firebase already initialized: $e');
   }
 
+  // ─── Initialize Firestore settings ───
   try {
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
@@ -72,18 +78,21 @@ void main() async {
     debugPrint('Firestore settings error: $e');
   }
 
+  // ─── Initialize Dependency Injection ───
   try {
     await Injection.init();
   } catch (e) {
     debugPrint('Injection init error: $e');
   }
 
+  // ─── Initialize Local Storage ───
   try {
     await LocalStorageService.init();
   } catch (e) {
     debugPrint('LocalStorage init error: $e');
   }
 
+  // ─── Initialize Connectivity ───
   try {
     final connectivity = ConnectivityService();
     await connectivity.checkConnection();
@@ -91,7 +100,7 @@ void main() async {
     debugPrint('Connectivity init error: $e');
   }
 
-  runApp(const MyApp());
+  print('✅ All services initialized');
 }
 
 class MyApp extends StatelessWidget {
@@ -136,7 +145,6 @@ class MyApp extends StatelessWidget {
           '/farmer/schedule': (context) => const ScheduleScreen(),
           '/farmer/communities': (context) => const JoinCommunityScreen(),
           '/register-driver': (context) => const RegisterDriverScreen(),
-          // ✅ ADDED: Driver Home Route
           '/driver/home': (context) => const DriverHomeScreen(),
           '/driver/login': (context) => const DriverLoginScreen(),
           '/driver/route': (context) => const DriverRouteScreen(),

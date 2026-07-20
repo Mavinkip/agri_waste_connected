@@ -18,9 +18,10 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
+    // Start rotation animation
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 2),
     )..repeat();
 
     _navigate();
@@ -33,15 +34,19 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
+    // Wait for authentication to complete
     await Future.delayed(const Duration(seconds: 2));
+
     if (!mounted) return;
 
     final user = FirebaseAuth.instance.currentUser;
+
     if (user == null) {
       Navigator.pushReplacementNamed(context, '/login');
       return;
     }
 
+    // Check for admin (hardcoded email)
     if (user.email == 'admin@farm.com') {
       Navigator.pushReplacementNamed(context, '/admin/dashboard');
       return;
@@ -52,6 +57,9 @@ class _SplashScreenState extends State<SplashScreen>
           .collection('users')
           .doc(user.uid)
           .get();
+
+      if (!mounted) return;
+
       final role = doc.data()?['role'] ?? 'farmer';
 
       switch (role) {
@@ -64,7 +72,8 @@ class _SplashScreenState extends State<SplashScreen>
         default:
           Navigator.pushReplacementNamed(context, '/farmer/home');
       }
-    } catch (_) {
+    } catch (e) {
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
     }
   }
@@ -72,34 +81,43 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2E7D32),
+      backgroundColor: const Color(0xFF1A7A4A),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ─── Animated Logo ───
+            // ─── Spinning Ring with Circular Leaf ───
             SizedBox(
-              width: 200,
-              height: 200,
+              width: 150,
+              height: 150,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Rotating Arrows (behind the leaf)
+                  // Spinning progress ring
                   RotationTransition(
                     turns: _rotationController,
-                    child: Image.asset(
-                      'assets/logo/arrows.png',  // ← Updated path
-                      width: 180,
-                      height: 180,
-                      fit: BoxFit.contain,
+                    child: const SizedBox(
+                      width: 150,
+                      height: 150,
+                      child: CircularProgressIndicator(
+                        value: null,
+                        strokeWidth: 4,
+                        color: Colors.white,
+                        backgroundColor: Colors.white24,
+                      ),
                     ),
                   ),
-                  // Static Leaf (on top, doesn't rotate)
-                  Image.asset(
-                    'assets/logo/leaf.png',  // ← Updated path
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.contain,
+                  // Circular leaf (white background removed)
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        image: const AssetImage('assets/logo/leaf.png'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -126,12 +144,6 @@ class _SplashScreenState extends State<SplashScreen>
                 fontSize: 14,
                 letterSpacing: 1.2,
               ),
-            ),
-            const SizedBox(height: 32),
-
-            // ─── Loading Indicator ───
-            const CircularProgressIndicator(
-              color: Colors.white54,
             ),
           ],
         ),

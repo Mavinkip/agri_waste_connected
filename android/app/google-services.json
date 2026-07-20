@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:992467198831:android:b038959955b0af9352fe9a",
+        "android_client_info": {
+          "package_name": "com.agricycle.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAagFCNfx1oAr2rXbinI_t9-vS8nK6hfA4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:992467198831:android:99faf58b3219d25e52fe9a",
         "android_client_info": {
           "package_name": "com.example.agri_waste_connected"

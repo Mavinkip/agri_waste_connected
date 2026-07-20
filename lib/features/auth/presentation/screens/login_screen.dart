@@ -44,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     print('✅ Admin user created in Firebase Auth: ${credential.user!.uid}');
 
-    // Create admin document in Firestore
     await FirebaseFirestore.instance
         .collection('users')
         .doc(credential.user!.uid)
@@ -77,7 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
         UserCredential? credential;
 
         try {
-          // Try to sign in first
           credential = await FirebaseAuth.instance
               .signInWithEmailAndPassword(
             email: _adminEmail,
@@ -86,7 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
           print('✅ Admin signed in successfully');
         } on FirebaseAuthException catch (e) {
           if (e.code == 'user-not-found') {
-            // Admin doesn't exist - create it
             credential = await _createAdmin();
           } else if (e.code == 'wrong-password') {
             throw Exception('Incorrect admin password. Please contact support.');
@@ -96,7 +93,6 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         if (credential != null && credential.user != null) {
-          // Check if admin document exists in Firestore
           try {
             final doc = await FirebaseFirestore.instance
                 .collection('users')
@@ -104,7 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 .get();
 
             if (!doc.exists) {
-              // Create admin document if it doesn't exist
               await FirebaseFirestore.instance
                   .collection('users')
                   .doc(credential.user!.uid)
@@ -119,7 +114,6 @@ class _LoginScreenState extends State<LoginScreen> {
               print('✅ Admin document created in Firestore');
             }
           } catch (e) {
-            // If Firestore fails, we can still continue since admin is authenticated
             print('⚠️ Firestore check failed, but admin is authenticated: $e');
           }
 
@@ -155,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // ── EMAIL LOGIN (Company or other email users) ──
+    // ── EMAIL LOGIN ──
     if (input.contains('@')) {
       try {
         print('📧 Attempting email login for: $input');
@@ -235,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // ── PHONE LOGIN (farmer / driver) ──
+    // ── PHONE LOGIN ──
     try {
       final phone = _cleanPhone(input);
       final loginEmail = '$phone@agri.local';
@@ -329,39 +323,45 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 60),
+              const SizedBox(height: 60), // Increased height to push logo down
+              // ─── LOGO SECTION ───
               Center(
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Icon(
-                    Icons.agriculture_rounded,
-                    color: Colors.white,
-                    size: 50,
-                  ),
+                child: Column(
+                  children: [
+                    // Leaf Image (transparent background)
+                    Image.asset(
+                      'assets/logo/leaf.png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 20),
+                    // App Name
+                    const Text(
+                      'Agri Cycle',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryGreen,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Tagline
+                    const Text(
+                      'Waste is Wealth',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 30),
-              const Text(
-                'Welcome Back!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Login with phone number or email',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.grey),
-              ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 50), // Space before form
 
+              // ─── LOGIN FORM ───
               Form(
                 key: _formKey,
                 child: Column(children: [
